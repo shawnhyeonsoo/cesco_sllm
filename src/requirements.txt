@@ -1,0 +1,15 @@
+# SageMaker training container requirements
+# These will be installed in the training instance
+
+# Core ML/DL
+torch
+transformers
+peft
+accelerate
+datasets
+
+# Evaluation
+rouge-score
+
+# Weights & Biases
+wandb

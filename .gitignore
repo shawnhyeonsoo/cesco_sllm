@@ -1,0 +1,130 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+*.pyo
+*.pyd
+build/
+dist/
+wheels/
+*.egg-info
+*.egg
+.eggs/
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Environment variables
+.env
+.env.local
+
+# Model files (too large for git)
+lora_model/
+*.bin
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.h5
+*.onnx
+
+# Training outputs
+outputs/
+runs/
+logs/
+wandb/
+checkpoints/
+
+# Data files (if too large)
+# Large training data files (excluded from git)
+data/*.jsonl
+data/train.jsonl
+data/test.jsonl
+# Uncomment to exclude all data:
+# data/*.csv
+# data/*.json
+
+# AWS/SageMaker
+.aws/
+sagemaker/
+
+# Test results
+test_results_*.json
+*.log
+
+# Compiled files
+*.so
+*.dylib
+
+# Distribution / packaging
+.Python
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.manifest
+*.spec
+
+# PyInstaller
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# UV lock file (optional - comment out if you want to commit it)
+# uv.lock

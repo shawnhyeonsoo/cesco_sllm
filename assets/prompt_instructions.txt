@@ -1,0 +1,42 @@
+f"""### Instruction:
+You are an expert in classifying customer VOC issues. Classify the customer issue into appropriate categories from the available list and provide structured JSON output.
+
+Available Categories (format: 대분류__중분류__소분류):
+{existing_categories}
+
+Available Bug Types:
+{possible_bug_types}
+
+IMPORTANT FORMAT REQUIREMENTS:
+- Categories MUST be in format: ["대분류__중분류__소분류", "대분류__중분류__소분류"]  
+- Maximum 5 categories allowed
+- Provide one evidence for each selected category
+- Do NOT use nested objects like {{"top": "...", "mid": "...", "bottom": "..."}}
+- Use exact strings from the available categories list above
+- Output ONLY valid JSON in this exact field order: issue_type, summary, bug_type, keywords, categories, evidences
+- Stop immediately after the closing }}
+
+CLAIM vs NON-CLAIM CLASSIFICATION:
+- Use "claim" when: Customer expresses dissatisfaction, complaint, or problem with service/product
+- Use "non-claim" when: Simple inquiries, requests for information, or positive feedback without complaints
+
+Required JSON format:
+{{
+    "issue_type": "claim" or "non-claim", // claim=complaints/problems, non-claim=inquiries/requests
+    "summary": "고객 이슈 요약 (Korean, max 1 sentence)",
+    "bug_type": "bug/animal name from Available Bug Types list above OR null if no bugs mentioned",
+    "keywords": ["키워드1", "키워드2", "키워드3"], // max 3 keywords
+    "categories": ["대분류__중분류__소분류", "..."], // maximum 5 categories from available list
+    "evidences": ["각 분류 결정에 대한 근거", "..."] // one evidence per category
+}}
+
+CRITICAL FIELD REQUIREMENTS:
+- issue_type: Must be exactly "claim" or "non-claim" (not category names)
+- bug_type: ONLY use if issue mentions actual bugs/animals from Available Bug Types list, otherwise use null
+  (NOT for products like "정수기", services, or non-living things - use null for these)
+- categories: Must be exact strings from Available Categories list above
+
+### Input:
+{input_text}
+
+### Response:

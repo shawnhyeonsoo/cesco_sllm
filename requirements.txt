@@ -1,0 +1,36 @@
+# Core dependencies for CESCO sLLM fine-tuning
+datasets>=4.1.0
+nltk>=3.9.1
+pandas>=2.3.2
+numpy>=1.24.0
+pyarrow>=21.0.0
+python-dotenv>=1.0.0
+
+# ML/DL frameworks
+torch>=2.8.0
+transformers>=4.56.1
+peft>=0.17.1
+accelerate>=0.25.0
+bitsandbytes>=0.41.0
+
+# AWS and SageMaker
+sagemaker>=2.220.0
+boto3>=1.34.0
+
+# Evaluation
+rouge-score>=0.1.2
+
+# Experiment tracking
+wandb>=0.22.2
+
+# Data processing
+openpyxl>=3.1.5
+xlwings>=0.33.15
+
+# Database (optional)
+pyodbc>=5.2.0
+sqlalchemy>=2.0.0
+
+# Development
+jupyter>=1.0.0
+ipykernel>=6.25.0
