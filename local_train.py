@@ -134,8 +134,8 @@ def load_and_prepare_data(
         """Tokenize the text."""
         # Combine instruction and response
         texts = []
-        for instruction, response in zip(examples["instruction"], examples["response"]):
-            text = f"{instruction}\n{response}"
+        for instruction, output in zip(examples["instruction"], examples["output"]):
+            text = f"{instruction}\n{output}"
             texts.append(text)
         
         # Tokenize
@@ -198,7 +198,6 @@ def train_model(
     
     # Initialize W&B if enabled
     if hp["use_wandb"]:
-        os.environ['WANDB_API_KEY'] = Config.WANDB_API_KEY
         wandb.init(
             project=Config.WANDB_PROJECT,
             config=hp,
@@ -280,10 +279,6 @@ def train_model(
 
 def main():
     import argparse
-    
-    # Set HuggingFace token as environment variable
-    os.environ['HUGGING_FACE_HUB_TOKEN'] = Config.HUGGING_FACE_HUB_TOKEN
-    os.environ['HF_TOKEN'] = Config.HUGGING_FACE_HUB_TOKEN
     
     parser = argparse.ArgumentParser(description="Local training with LoRA")
     parser.add_argument("--train-file", type=str, default="data/train.jsonl",
