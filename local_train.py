@@ -183,14 +183,15 @@ def load_and_prepare_data(
     
     def tokenize_function(examples):
         """Tokenize the text."""
-        # Combine instruction and response
         texts = []
         for instruction, output in zip(examples["instruction"], examples["output"]):
-            text = f"{instruction}\n{output}"
-            texts.append(text)
+            # Full text = instruction + response
+            # The model will learn to generate 'output' given 'instruction'
+            full_text = f"{instruction}\n{output}"
+            texts.append(full_text)
         
         # Tokenize
-        result = tokenizer(
+        model_inputs = tokenizer(
             texts,
             truncation=True,
             max_length=max_length,
@@ -198,10 +199,38 @@ def load_and_prepare_data(
             return_tensors=None,
         )
         
-        # Set labels (for causal LM, labels = input_ids)
-        result["labels"] = result["input_ids"].copy()
+        # Create labels: mask the instruction part, only train on the output
+        labels = []
+        for instruction, output in zip(examples["instruction"], examples["output"]):
+            # Tokenize instruction and output separately
+            instruction_ids = tokenizer(
+                f"{instruction}\n",
+                truncation=True,
+                max_length=max_length,
+                add_special_tokens=False
+            )["input_ids"]
+            
+            full_ids = tokenizer(
+                f"{instruction}\n{output}",
+                truncation=True,
+                max_length=max_length,
+                padding="max_length"
+            )["input_ids"]
+            
+            # Create labels: -100 for instruction (ignore), actual ids for output
+            label = [-100] * len(instruction_ids) + full_ids[len(instruction_ids):]
+            
+            # Pad to max_length
+            if len(label) < max_length:
+                label = label + [-100] * (max_length - len(label))
+            else:
+                label = label[:max_length]
+            
+            labels.append(label)
         
-        return result
+        model_inputs["labels"] = labels
+        
+        return model_inputs
     
     # Tokenize datasets
     print("Tokenizing datasets...")
