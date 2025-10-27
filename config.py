@@ -1,14 +1,8 @@
 """
 Configuration module for CESCO sLLM fine-tuning.
-Loads configuration from environment variables or uses defaults.
+All configuration values are hardcoded for easy deployment.
 """
-import os
 from pathlib import Path
-from typing import Optional
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 
 class Config:
@@ -50,45 +44,16 @@ class Config:
     WANDB_PROJECT: str = "cesco-sllm-finetuning"
     
     # HuggingFace Token
-    HUGGING_FACE_HUB_TOKEN: str = os.getenv("HUGGING_FACE_HUB_TOKEN", "")
+    HUGGING_FACE_HUB_TOKEN: str = "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"
     
     # Weights & Biases API Key
-    WANDB_API_KEY: str = os.getenv("WANDB_API_KEY", "")
+    WANDB_API_KEY: str = "c81320346d825ecba691cbc52468fbb48b97e834"
     
     # Paths
     PROJECT_ROOT: Path = Path(__file__).parent
     DATA_DIR: Path = PROJECT_ROOT / "data"
     ASSETS_DIR: Path = PROJECT_ROOT / "assets"
     SRC_DIR: Path = PROJECT_ROOT / "src"
-    
-    @classmethod
-    def load_from_env(cls):
-        """Load configuration from environment variables."""
-        # AWS Configuration
-        cls.SAGEMAKER_ROLE_ARN = os.getenv("SAGEMAKER_ROLE_ARN", cls.SAGEMAKER_ROLE_ARN)
-        cls.S3_BUCKET = os.getenv("S3_BUCKET", cls.S3_BUCKET)
-        cls.AWS_REGION = os.getenv("AWS_REGION", cls.AWS_REGION)
-        
-        # Model Configuration
-        cls.BASE_MODEL_NAME = os.getenv("BASE_MODEL_NAME", cls.BASE_MODEL_NAME)
-        cls.TRAINING_INSTANCE_TYPE = os.getenv("TRAINING_INSTANCE_TYPE", cls.TRAINING_INSTANCE_TYPE)
-        cls.INFERENCE_INSTANCE_TYPE = os.getenv("INFERENCE_INSTANCE_TYPE", cls.INFERENCE_INSTANCE_TYPE)
-        
-        # Training Hyperparameters
-        cls.NUM_EPOCHS = float(os.getenv("NUM_EPOCHS", str(cls.NUM_EPOCHS)))
-        cls.BATCH_SIZE = int(os.getenv("BATCH_SIZE", str(cls.BATCH_SIZE)))
-        cls.LEARNING_RATE = float(os.getenv("LEARNING_RATE", str(cls.LEARNING_RATE)))
-        cls.LORA_R = int(os.getenv("LORA_R", str(cls.LORA_R)))
-        cls.LORA_ALPHA = int(os.getenv("LORA_ALPHA", str(cls.LORA_ALPHA)))
-        
-        # Optimization
-        cls.USE_SPOT_INSTANCES = os.getenv("USE_SPOT_INSTANCES", "false").lower() == "true"
-        
-        # W&B
-        if os.getenv("WANDB_API_KEY"):
-            cls.USE_WANDB = True
-        
-        return cls
     
     @classmethod
     def get_hyperparameters(cls) -> dict:
@@ -155,10 +120,6 @@ class Config:
             print(f"  W&B Project: {cls.WANDB_PROJECT}")
         
         print("=" * 60 + "\n")
-
-
-# Load configuration from environment on import
-Config.load_from_env()
 
 
 if __name__ == "__main__":

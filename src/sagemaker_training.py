@@ -168,8 +168,8 @@ class SageMakerTrainer:
             environment={
                 "NCCL_DEBUG": "INFO",
                 "NCCL_SOCKET_IFNAME": "eth0",
-                "WANDB_API_KEY": os.environ.get("WANDB_API_KEY", ""),
-                "HUGGING_FACE_HUB_TOKEN": os.environ.get("HUGGING_FACE_HUB_TOKEN", ""),
+                "WANDB_API_KEY": "c81320346d825ecba691cbc52468fbb48b97e834",
+                "HUGGING_FACE_HUB_TOKEN": "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",
             },
             keep_alive_period_in_seconds=1800,  # Keep instance warm for 30 min
             volume_size=256,  # GB
