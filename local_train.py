@@ -72,7 +72,7 @@ class GenerationCallback(TrainerCallback):
                 
                 generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
                 # Extract only the generated part (after the prompt)
-                response = generated_text[len(prompt):].strip()
+                response = generated_text.strip()
                 print(f"Generated: {response}\n")
             
             print("=" * 80 + "\n")
