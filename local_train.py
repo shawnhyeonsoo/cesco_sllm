@@ -6,6 +6,7 @@ Can be run on any machine with a GPU or even CPU (very slow).
 import os
 import sys
 import json
+import random
 import torch
 from pathlib import Path
 from datasets import load_dataset
@@ -15,7 +16,8 @@ from transformers import (
     TrainingArguments,
     Trainer,
     DataCollatorForLanguageModeling,
-    BitsAndBytesConfig
+    BitsAndBytesConfig,
+    TrainerCallback
 )
 from peft import (
     LoraConfig,
@@ -28,6 +30,55 @@ import wandb
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 from config import Config
+
+
+class GenerationCallback(TrainerCallback):
+    """Callback to generate sample outputs during training."""
+    
+    def __init__(self, tokenizer, test_prompts, generate_every_n_steps=100):
+        self.tokenizer = tokenizer
+        self.test_prompts = test_prompts
+        self.generate_every_n_steps = generate_every_n_steps
+    
+    def on_step_end(self, args, state, control, model=None, **kwargs):
+        """Generate samples at regular intervals."""
+        if state.global_step > 0 and state.global_step % self.generate_every_n_steps == 0:
+            print("\n" + "=" * 80)
+            print(f"GENERATION TEST at Step {state.global_step}")
+            print("=" * 80)
+            
+            model.eval()
+            for i, prompt in enumerate(self.test_prompts, 1):
+                print(f"\n--- Sample {i} ---")
+                #print(f"Prompt: {prompt[:200]}...")
+                
+                inputs = self.tokenizer(
+                    prompt,
+                    return_tensors="pt",
+                    truncation=True,
+                    max_length=512
+                ).to(model.device)
+                
+                with torch.no_grad():
+                    outputs = model.generate(
+                        **inputs,
+                        max_new_tokens=300,
+                        temperature=0.7,
+                        do_sample=True,
+                        top_p=0.9,
+                        pad_token_id=self.tokenizer.pad_token_id,
+                        eos_token_id=self.tokenizer.eos_token_id,
+                    )
+                
+                generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+                # Extract only the generated part (after the prompt)
+                response = generated_text[len(prompt):].strip()
+                print(f"Generated: {response}\n")
+            
+            print("=" * 80 + "\n")
+            model.train()
+        
+        return control
 
 
 def setup_model_and_tokenizer(
@@ -173,9 +224,22 @@ def train_model(
     train_dataset,
     eval_dataset,
     output_dir: str = "./lora_model",
-    hyperparameters: dict = None
+    hyperparameters: dict = None,
+    test_prompts: list = None,
+    generate_every_n_steps: int = 100
 ):
-    """Train the model with LoRA."""
+    """Train the model with LoRA.
+    
+    Args:
+        model: The model to train
+        tokenizer: Tokenizer
+        train_dataset: Training dataset
+        eval_dataset: Evaluation dataset
+        output_dir: Output directory for model
+        hyperparameters: Optional hyperparameters to override defaults
+        test_prompts: List of test prompts to generate during training
+        generate_every_n_steps: Generate samples every N steps
+    """
     
     # Default hyperparameters
     hp = {
@@ -236,6 +300,17 @@ def train_model(
         mlm=False,
     )
     
+    # Prepare generation callback if test prompts provided
+    callbacks = []
+    if test_prompts:
+        print(f"Adding generation callback (will generate every {generate_every_n_steps} steps)")
+        generation_callback = GenerationCallback(
+            tokenizer=tokenizer,
+            test_prompts=test_prompts,
+            generate_every_n_steps=generate_every_n_steps
+        )
+        callbacks.append(generation_callback)
+    
     # Trainer
     trainer = Trainer(
         model=model,
@@ -243,6 +318,7 @@ def train_model(
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         data_collator=data_collator,
+        callbacks=callbacks,
     )
     
     # Train
@@ -303,6 +379,14 @@ def main():
                        help="Don't use quantization")
     parser.add_argument("--cpu", action="store_true",
                        help="Force CPU training (very slow)")
+    parser.add_argument("--test-generation", action="store_true", default=True,
+                       help="Generate test samples during training (default: True)")
+    parser.add_argument("--no-test-generation", action="store_false", dest="test_generation",
+                       help="Don't generate test samples during training")
+    parser.add_argument("--generation-steps", type=int, default=5,
+                       help="Generate samples every N steps (default: 50)")
+    parser.add_argument("--num-test-samples", type=int, default=3,
+                       help="Number of test samples to generate (default: 3)")
     
     args = parser.parse_args()
     
@@ -360,6 +444,21 @@ def main():
         args.max_length
     )
     
+    # Prepare test prompts for generation during training
+    test_prompts = []
+    if args.test_generation:
+        print(f"\nLoading {args.num_test_samples} test samples for generation during training...")
+        with open(args.test_file, 'r') as f:
+            test_data = [json.loads(line) for line in f]
+        
+        # Select a few diverse samples
+        import random
+        random.seed(42)
+        sample_indices = random.sample(range(len(test_data)), min(args.num_test_samples, len(test_data)))
+        test_prompts = [test_data[i]["instruction"] for i in sample_indices]
+        
+        print(f"Selected {len(test_prompts)} test prompts for generation")
+    
     # Train
     trainer = train_model(
         model,
@@ -371,7 +470,9 @@ def main():
             "num_train_epochs": args.epochs,
             "per_device_train_batch_size": args.batch_size,
             "learning_rate": args.learning_rate,
-        }
+        },
+        test_prompts=test_prompts if args.test_generation else None,
+        generate_every_n_steps=args.generation_steps
     )
     
     print("\n" + "=" * 80)
