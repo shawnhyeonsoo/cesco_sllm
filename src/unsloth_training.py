@@ -73,6 +73,11 @@ class GenerationCallback(TrainerCallback):
             
             claim_accuracy = 0
             category_accuracy = 0
+
+            print(len(self.test_prompts))
+            print(len(self.test_responses))
+
+            
             
             for i, prompt in enumerate(self.test_prompts, 1):
                 print("==PROMPT==")
