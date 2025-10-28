@@ -66,9 +66,10 @@ class GenerationCallback(TrainerCallback):
             logger.info(f"GENERATION TEST at Step {state.global_step}")
             logger.info("=" * 80)
             FastLanguageModel.for_inference(model)
-            alpaca_prompt = self.alpaca_prompt()
+            alpaca_prompt_template = self.alpaca_prompt()
             for i, prompt in enumerate(self.test_prompts, 1):
-                alpaca_prompt = self.alpaca_prompt(
+                print(prompt)
+                alpaca_prompt = alpaca_prompt_template.format(
                     prompt.split("### Instruction:")[1].split("###")[0].strip(),
                     prompt.split("### Input:")[1].split("###")[0].strip(),
                     ""
@@ -342,6 +343,7 @@ def main():
         sample = train_dataset[idx]
         # Extract instruction and input from the formatted text
         formatted_text = sample["text"]
+        
         
         # Create prompt without the response part
         if "### Instruction:" in formatted_text and "### Input:" in formatted_text:
