@@ -74,6 +74,12 @@ class GenerationCallback(TrainerCallback):
             claim_accuracy = 0
             category_accuracy = 0
 
+            major_category_accuracy = 0
+            mid_category_accuracy = 0
+            minor_category_accuracy = 0
+
+
+            total_gt_claims = 0
             print(len(self.test_prompts)) # 3
             print(len(self.test_responses)) # 3
 
@@ -94,6 +100,17 @@ class GenerationCallback(TrainerCallback):
                 )
 
                 gt_claim = ground_truth["claim_status"]
+
+                gt_major_categories = [
+                    cat.split("__")[0] for cat in ground_truth["categories"]
+                ]
+                gt_mid_categories = [
+                    cat.split("__")[1] for cat in ground_truth["categories"]
+                ]
+                gt_minor_categories = [
+                    cat.split("__")[2] for cat in ground_truth["categories"]
+                ]
+
                 gt_category = ground_truth["categories"]
 
                 inputs = self.tokenizer(
@@ -110,9 +127,30 @@ class GenerationCallback(TrainerCallback):
 
                     pred_claim = output["claim_status"]
                     pred_category = output["categories"]
+
+                    pred_major_categories = [
+                        cat.split("__")[0] for cat in pred_category
+                    ]
+                    pred_mid_categories = [
+                        cat.split("__")[1] for cat in pred_category
+                    ]
+                    pred_minor_categories = [
+                        cat.split("__")[2] for cat in pred_category
+                    ]
+
                     if pred_claim == gt_claim:
                         claim_accuracy += 1
-                    if set(pred_category) == set(gt_category):
+                    
+                    # only calculate with gt_claim_status == claim
+                    if gt_claim == "claim":
+                        total_gt_claims += 1
+                        if set(pred_major_categories).issubset(set(gt_major_categories)):
+                            major_category_accuracy += 1
+                        if set(pred_mid_categories).issubset(set(gt_mid_categories)):
+                            mid_category_accuracy += 1
+                        if set(pred_minor_categories).issubset(set(gt_minor_categories)):
+                            minor_category_accuracy += 1
+                    if set(gt_category).issubset(set(pred_category)):
                         category_accuracy += 1
                 except:
                     pass
@@ -122,7 +160,7 @@ class GenerationCallback(TrainerCallback):
             category_acc_percent = (category_accuracy / total_samples) * 100
             logger.info(f"Claim Status Accuracy: {claim_accuracy}/{total_samples} ({claim_acc_percent:.2f}%)")
             logger.info(f"Categories Accuracy: {category_accuracy}/{total_samples} ({category_acc_percent:.2f}%)")
-            
+            logger.info(f"Total Ground Truth Claims: {total_gt_claims}/{total_samples} ({(total_gt_claims / total_samples * 100):.2f}%)")
             # Log to wandb if available
             try:
                 import wandb
@@ -130,8 +168,11 @@ class GenerationCallback(TrainerCallback):
                     wandb.log({
                         "eval/claim_accuracy": claim_acc_percent,
                         "eval/category_accuracy": category_acc_percent,
-                        "eval/claim_correct": claim_accuracy,
-                        "eval/category_correct": category_accuracy,
+                        "eval/claim_major_category_accuracy": (major_category_accuracy / total_gt_claims * 100) if total_gt_claims > 0 else 0,
+                        "eval/claim_mid_category_accuracy": (mid_category_accuracy / total_gt_claims * 100) if total_gt_claims > 0 else 0,
+                        "eval/claim_minor_category_accuracy": (minor_category_accuracy / total_gt_claims * 100) if total_gt_claims > 0 else 0,
+                        #"eval/claim_correct": claim_accuracy,
+                        #"eval/category_correct": category_accuracy,
                         "eval/total_samples": total_samples,
                         "step": state.global_step,
                     })
@@ -423,7 +464,7 @@ def main():
     # Get 3 random samples from training data for testing
     import random
     random.seed(42)
-    test_indices = random.sample(range(len(test_dataset)), min(10, len(test_dataset)))
+    test_indices = random.sample(range(len(test_dataset)), min(len(test_dataset), len(test_dataset)))
 
     test_prompts = []
     test_responses = []
