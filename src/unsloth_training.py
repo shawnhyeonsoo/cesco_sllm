@@ -119,7 +119,7 @@ class GenerationCallback(TrainerCallback):
                 generated_output = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
                 generation_section = generated_output.split("### Response:")[-1].strip()
                 #print("==OUTPUT==")
-                #print(generation_section)
+                print(generation_section)
                 try:
                     output = json.loads(generation_section)
                     #print(json.dumps(output, ensure_ascii=False, indent=2))
@@ -253,7 +253,7 @@ def parse_args():
     
     # Model arguments
     parser.add_argument("--model_name", type=str, default="unsloth/Meta-Llama-3.1-8B")
-    parser.add_argument("--max_seq_length", type=int, default=2048)
+    parser.add_argument("--max_seq_length", type=int, default=8096)
     parser.add_argument("--load_in_4bit", type=bool, default=True)
     
     # LoRA arguments
@@ -268,7 +268,7 @@ def parse_args():
     parser.add_argument("--learning_rate", type=float, default=2e-4)
     parser.add_argument("--warmup_steps", type=int, default=5)
     parser.add_argument("--logging_steps", type=int, default=1)
-    parser.add_argument("--save_steps", type=int, default=100)
+    parser.add_argument("--save_steps", type=int, default=10)
     parser.add_argument("--max_steps", type=int, default=-1)
     
     # SageMaker specific
