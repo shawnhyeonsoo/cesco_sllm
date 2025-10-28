@@ -78,7 +78,9 @@ class GenerationCallback(TrainerCallback):
                 print("==PROMPT==")
                 print(prompt)
                 print("==GROUND TRUTH==")
-                print(self.test_responses[i])
+                ground_truth = self.test_responses[i].replace(self.tokenizer.eos_token, "").strip()
+                print(ground_truth)
+                ground_truth = json.loads(ground_truth)
 
                 alpaca_prompt = alpaca_prompt_template.format(
                     prompt.split("### Instruction:")[1].split("###")[0].strip(),
@@ -86,8 +88,8 @@ class GenerationCallback(TrainerCallback):
                     ""
                 )
 
-                gt_claim = json.loads(prompt.split("### Response:")[-1].strip())["claim_status"]
-                gt_category = json.loads(prompt.split("### Response:")[-1].strip())["categories"]
+                gt_claim = json.loads(ground_truth)["claim_status"]
+                gt_category = json.loads(ground_truth)["categories"]
 
                 inputs = self.tokenizer(
                     alpaca_prompt,
