@@ -74,12 +74,12 @@ class GenerationCallback(TrainerCallback):
             claim_accuracy = 0
             category_accuracy = 0
 
-            print(len(self.test_prompts))
-            print(len(self.test_responses))
+            print(len(self.test_prompts)) # 3
+            print(len(self.test_responses)) # 3
 
             
             
-            for i, prompt in enumerate(self.test_prompts, 1):
+            for i, prompt in enumerate(self.test_prompts):
                 print("==PROMPT==")
                 print(prompt)
                 print("==GROUND TRUTH==")
