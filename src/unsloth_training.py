@@ -6,6 +6,7 @@ import os
 import sys
 import json
 import argparse
+from tqdm import tqdm
 import logging
 import subprocess
 from pathlib import Path
@@ -83,14 +84,12 @@ class GenerationCallback(TrainerCallback):
             print(len(self.test_prompts)) # 3
             print(len(self.test_responses)) # 3
 
-            
-            
-            for i, prompt in enumerate(self.test_prompts):
-                print("==PROMPT==")
-                print(prompt)
-                print("==GROUND TRUTH==")
+
+
+            for i, prompt in tqdm(enumerate(self.test_prompts)):
+                #print("==GROUND TRUTH==")
                 ground_truth = self.test_responses[i].replace(self.tokenizer.eos_token, "").strip()
-                print(ground_truth)
+                #print(ground_truth)
                 ground_truth = json.loads(ground_truth)
 
                 alpaca_prompt = alpaca_prompt_template.format(
@@ -119,11 +118,11 @@ class GenerationCallback(TrainerCallback):
                 outputs = model.generate(**inputs, max_new_tokens = 512, use_cache = True)
                 generated_output = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
                 generation_section = generated_output.split("### Response:")[-1].strip()
-                print("==OUTPUT==")
-                print(generation_section)
+                #print("==OUTPUT==")
+                #print(generation_section)
                 try:
                     output = json.loads(generation_section)
-                    print(json.dumps(output, ensure_ascii=False, indent=2))
+                    #print(json.dumps(output, ensure_ascii=False, indent=2))
 
                     pred_claim = output["claim_status"]
                     pred_category = output["categories"]
