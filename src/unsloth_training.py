@@ -166,8 +166,8 @@ def parse_args():
     parser.add_argument("--max_steps", type=int, default=-1)
     
     # SageMaker specific
-    parser.add_argument("--train_dir", type=str, default=os.environ.get("SM_CHANNEL_TRAIN", "./data"))
-    parser.add_argument("--test_dir", type=str, default=os.environ.get("SM_CHANNEL_TEST", "./data"))
+    parser.add_argument("--train_dir", type=str, default="./data/unsloth_train_dataset.json")
+    parser.add_argument("--test_dir", type=str, default="./data/unsloth_test_dataset.json")
     parser.add_argument("--model_dir", type=str, default=os.environ.get("SM_MODEL_DIR", "./outputs"))
     parser.add_argument("--output_dir", type=str, default=os.environ.get("SM_OUTPUT_DATA_DIR", "./outputs"))
     
