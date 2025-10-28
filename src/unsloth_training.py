@@ -124,7 +124,10 @@ class GenerationCallback(TrainerCallback):
             logger.info(f"Categories Accuracy: {category_accuracy}/{total_samples} ({category_acc_percent:.2f}%)")
                 #print(self.tokenizer.batch_decode(outputs))
                 
-
+            print("=============================================="
+            )
+            print(f"Claim Accuracy: {claim_accuracy}/{total_samples} ({claim_acc_percent:.2f}%)")
+            print(f"Category Accuracy: {category_accuracy}/{total_samples} ({category_acc_percent:.2f}%)")
 
             """
             model.eval()
@@ -381,7 +384,7 @@ def main():
     # Get 3 random samples from training data for testing
     import random
     random.seed(42)
-    test_indices = random.sample(range(len(test_dataset)), min(3, len(test_dataset)))
+    test_indices = random.sample(range(len(test_dataset)), min(10, len(test_dataset)))
 
     test_prompts = []
     test_responses = []
