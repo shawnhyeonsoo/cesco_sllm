@@ -67,18 +67,46 @@ class GenerationCallback(TrainerCallback):
             logger.info("=" * 80)
             FastLanguageModel.for_inference(model)
             alpaca_prompt_template = self.alpaca_prompt()
+            
+            claim_accuracy = 0
+            category_accuracy = 0
+            
             for i, prompt in enumerate(self.test_prompts, 1):
+                print("==PROMPT==")
                 print(prompt)
                 alpaca_prompt = alpaca_prompt_template.format(
                     prompt.split("### Instruction:")[1].split("###")[0].strip(),
                     prompt.split("### Input:")[1].split("###")[0].strip(),
                     ""
                 )
+
+                gt_claim = json.loads(prompt.split("### Response:")[-1].strip())["claim_status"]
+                gt_category = json.loads(prompt.split("### Response:")[-1].strip())["categories"]
+
                 inputs = self.tokenizer(
                     alpaca_prompt,
                     return_tensors="pt",).to(model.device)
                 outputs = model.generate(**inputs, max_new_tokens = 512, use_cache = True)
-                print(self.tokenizer.batch_decode(outputs))
+                generated_output = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+                generation_section = generated_output.split("### Response:")[-1].strip()
+                output = json.loads(generation_section)
+                print(json.dumps(output, ensure_ascii=False, indent=2))
+
+                pred_claim = output["claim_status"]
+                pred_category = output["categories"]
+                if pred_claim == gt_claim:
+                    claim_accuracy += 1
+                if set(pred_category) == set(gt_category):
+                    category_accuracy += 1
+
+            total_samples = len(self.test_prompts)
+            claim_acc_percent = (claim_accuracy / total_samples) * 100
+            category_acc_percent = (category_accuracy / total_samples) * 100
+            logger.info(f"Claim Status Accuracy: {claim_accuracy}/{total_samples} ({claim_acc_percent:.2f}%)")
+            logger.info(f"Categories Accuracy: {category_accuracy}/{total_samples} ({category_acc_percent:.2f}%)")
+                #print(self.tokenizer.batch_decode(outputs))
+                
+
 
             """
             model.eval()
