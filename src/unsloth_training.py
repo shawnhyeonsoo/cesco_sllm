@@ -182,39 +182,34 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_data(train_dir: str, test_dir: str = None):
-    """Load training and optional test datasets."""
-    logger.info(f"Loading training data from {train_dir}")
+def load_data(train_path: str, test_path: str = None):
+    """
+    Load training and optional test datasets from direct file paths.
     
-    # Find the JSON file in the directory
-    train_files = list(Path(train_dir).glob("*.json")) + list(Path(train_dir).glob("*.jsonl"))
-    if not train_files:
-        raise ValueError(f"No JSON/JSONL files found in {train_dir}")
+    Args:
+        train_path: Direct path to training JSON/JSONL file
+        test_path: Direct path to test JSON/JSONL file (optional)
+    """
+    logger.info(f"Loading training data from {train_path}")
     
-    train_file = str(train_files[0])
-    logger.info(f"Using training file: {train_file}")
-    
-    # Load dataset
-    if train_file.endswith('.jsonl'):
-        dataset = load_dataset('json', data_files={'train': train_file}, split='train')
+    # Load training dataset directly from file path
+    if train_path.endswith('.jsonl'):
+        dataset = load_dataset('json', data_files={'train': train_path}, split='train')
     else:
-        dataset = load_dataset('json', data_files=train_file, split='train')
-    
+        dataset = load_dataset('json', data_files=train_path, split='train')
+
     logger.info(f"Loaded {len(dataset)} training examples")
     logger.info(f"Dataset columns: {dataset.column_names}")
     
     # Load test dataset if provided
     test_dataset = None
-    if test_dir:
-        test_files = list(Path(test_dir).glob("*.json")) + list(Path(test_dir).glob("*.jsonl"))
-        if test_files:
-            test_file = str(test_files[0])
-            logger.info(f"Using test file: {test_file}")
-            if test_file.endswith('.jsonl'):
-                test_dataset = load_dataset('json', data_files={'test': test_file}, split='test')
-            else:
-                test_dataset = load_dataset('json', data_files=test_file, split='train')
-            logger.info(f"Loaded {len(test_dataset)} test examples")
+    if test_path:
+        logger.info(f"Loading test data from {test_path}")
+        if test_path.endswith('.jsonl'):
+            test_dataset = load_dataset('json', data_files={'test': test_path}, split='test')
+        else:
+            test_dataset = load_dataset('json', data_files=test_path, split='train')
+        logger.info(f"Loaded {len(test_dataset)} test examples")
     
     return dataset, test_dataset
 
