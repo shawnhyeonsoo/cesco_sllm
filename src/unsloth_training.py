@@ -262,13 +262,13 @@ def parse_args():
     parser.add_argument("--lora_dropout", type=float, default=0)
     
     # Training arguments
-    parser.add_argument("--num_train_epochs", type=float, default=1)
+    parser.add_argument("--num_train_epochs", type=float, default=3)
     parser.add_argument("--per_device_train_batch_size", type=int, default=2)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=4)
     parser.add_argument("--learning_rate", type=float, default=2e-4)
     parser.add_argument("--warmup_steps", type=int, default=5)
     parser.add_argument("--logging_steps", type=int, default=1)
-    parser.add_argument("--save_steps", type=int, default=10)
+    parser.add_argument("--save_steps", type=int, default=100)
     parser.add_argument("--max_steps", type=int, default=-1)
     
     # SageMaker specific
