@@ -463,7 +463,7 @@ def main():
     # Get 3 random samples from training data for testing
     import random
     random.seed(42)
-    test_indices = random.sample(range(len(test_dataset)), min(len(test_dataset), len(test_dataset)))
+    test_indices = random.sample(range(len(test_dataset)), min(100, len(test_dataset)))
 
     test_prompts = []
     test_responses = []
