@@ -122,13 +122,29 @@ class GenerationCallback(TrainerCallback):
             category_acc_percent = (category_accuracy / total_samples) * 100
             logger.info(f"Claim Status Accuracy: {claim_accuracy}/{total_samples} ({claim_acc_percent:.2f}%)")
             logger.info(f"Categories Accuracy: {category_accuracy}/{total_samples} ({category_acc_percent:.2f}%)")
-                #print(self.tokenizer.batch_decode(outputs))
+            
+            # Log to wandb if available
+            try:
+                import wandb
+                if wandb.run is not None:
+                    wandb.log({
+                        "eval/claim_accuracy": claim_acc_percent,
+                        "eval/category_accuracy": category_acc_percent,
+                        "eval/claim_correct": claim_accuracy,
+                        "eval/category_correct": category_accuracy,
+                        "eval/total_samples": total_samples,
+                        "step": state.global_step,
+                    })
+            except ImportError:
+                pass
                 
-            print("=============================================="
-            )
+            print("==============================================")
             print(f"Claim Accuracy: {claim_accuracy}/{total_samples} ({claim_acc_percent:.2f}%)")
             print(f"Category Accuracy: {category_accuracy}/{total_samples} ({category_acc_percent:.2f}%)")
-
+            wandb.log({
+                "eval/claim_accuracy": claim_acc_percent,
+                "eval/category_accuracy": category_acc_percent
+            })
             """
             model.eval()
             for i, prompt in enumerate(self.test_prompts, 1):
@@ -222,8 +238,9 @@ def parse_args():
     parser.add_argument("--output_dir", type=str, default=os.environ.get("SM_OUTPUT_DATA_DIR", "./outputs"))
     
     # W&B
-    parser.add_argument("--use_wandb", type=bool, default=False)
+    parser.add_argument("--use_wandb", type=bool, default=True)
     parser.add_argument("--wandb_project", type=str, default="cesco-sllm-unsloth")
+    parser.add_argument("--wandb_run_name", type=str, default=None)
     parser.add_argument("--wandb_api_key", type=str, default=None)
     
     # HuggingFace token
@@ -299,13 +316,35 @@ def main():
     args = parse_args()
     
     # Set up W&B if requested
-    if args.use_wandb and args.wandb_api_key:
+    if args.use_wandb:
         import wandb
-        os.environ["WANDB_API_KEY"] = args.wandb_api_key
-        wandb.init(project=args.wandb_project)
+        if args.wandb_api_key:
+            os.environ["WANDB_API_KEY"] = args.wandb_api_key
+        
+        # Initialize wandb
+        run_name = args.wandb_run_name or f"unsloth-{args.model_name.split('/')[-1]}-lr{args.learning_rate}"
+        wandb.init(
+            project=args.wandb_project,
+            name=run_name,
+            config={
+                "model_name": args.model_name,
+                "max_seq_length": args.max_seq_length,
+                "lora_r": args.lora_r,
+                "lora_alpha": args.lora_alpha,
+                "lora_dropout": args.lora_dropout,
+                "num_train_epochs": args.num_train_epochs,
+                "per_device_train_batch_size": args.per_device_train_batch_size,
+                "gradient_accumulation_steps": args.gradient_accumulation_steps,
+                "learning_rate": args.learning_rate,
+                "warmup_steps": args.warmup_steps,
+                "max_steps": args.max_steps,
+            }
+        )
         report_to = "wandb"
+        logger.info(f"W&B initialized: project={args.wandb_project}, run={run_name}")
     else:
         report_to = "none"
+        logger.info("W&B disabled")
     
     # Set up HuggingFace token if provided
     if args.hf_token:
@@ -481,6 +520,12 @@ def main():
     # model.save_pretrained_gguf(f"{args.model_dir}/gguf", tokenizer)
     
     logger.info("Training complete!")
+    
+    # Finish wandb run
+    if args.use_wandb:
+        import wandb
+        wandb.finish()
+        logger.info("W&B run finished")
 
 
 if __name__ == "__main__":
