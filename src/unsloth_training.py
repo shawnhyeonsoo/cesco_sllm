@@ -88,8 +88,8 @@ class GenerationCallback(TrainerCallback):
                     ""
                 )
 
-                gt_claim = json.loads(ground_truth)["claim_status"]
-                gt_category = json.loads(ground_truth)["categories"]
+                gt_claim = ground_truth["claim_status"]
+                gt_category = ground_truth["categories"]
 
                 inputs = self.tokenizer(
                     alpaca_prompt,
