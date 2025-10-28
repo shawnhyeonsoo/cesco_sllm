@@ -38,9 +38,12 @@ logger = logging.getLogger(__name__)
 class GenerationCallback(TrainerCallback):
     """Callback to generate sample outputs during training."""
 
-    def __init__(self, tokenizer, test_prompts, generate_every_n_steps=100):
+    def __init__(self, tokenizer, test_prompts, 
+                 test_responses,
+                 generate_every_n_steps=100):
         self.tokenizer = tokenizer
         self.test_prompts = test_prompts
+        self.test_responses = test_responses
         self.generate_every_n_steps = generate_every_n_steps
         logger.info(f"GenerationCallback initialized with {len(test_prompts)} test prompts")
         logger.info(f"Will generate every {generate_every_n_steps} steps")
@@ -74,6 +77,9 @@ class GenerationCallback(TrainerCallback):
             for i, prompt in enumerate(self.test_prompts, 1):
                 print("==PROMPT==")
                 print(prompt)
+                print("==GROUND TRUTH==")
+                print(self.test_responses[i])
+
                 alpaca_prompt = alpaca_prompt_template.format(
                     prompt.split("### Instruction:")[1].split("###")[0].strip(),
                     prompt.split("### Input:")[1].split("###")[0].strip(),
@@ -371,6 +377,7 @@ def main():
     test_indices = random.sample(range(len(train_dataset)), min(3, len(train_dataset)))
     
     test_prompts = []
+    test_responses = []
     for idx in test_indices:
         # Get original data (before formatting)
         sample = train_dataset[idx]
@@ -390,6 +397,10 @@ def main():
             
             prompt = alpaca_prompt_template.format(instruction, input_text)
             test_prompts.append(prompt)
+            # Also store the ground truth response for accuracy checking
+            response_start = formatted_text.find("### Response:") + len("### Response:")
+            response_text = formatted_text[response_start:].strip()
+            test_responses.append(response_text)
     
     logger.info(f"Created {len(test_prompts)} test prompts for monitoring")
     
@@ -397,6 +408,7 @@ def main():
     generation_callback = GenerationCallback(
         tokenizer=tokenizer,
         test_prompts=test_prompts,
+        test_responses=test_responses,
         generate_every_n_steps=args.save_steps  # Generate at same intervals as saving
     )
     
