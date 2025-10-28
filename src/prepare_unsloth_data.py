@@ -5,6 +5,7 @@ Converts JSON data to instruction-input-output format for Alpaca-style prompts.
 import json
 import sys
 from pathlib import Path
+import pandas as pd
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -18,6 +19,12 @@ def load_json_data(file_path: str) -> list:
 
 
 def convert_to_instruction_format(data: list) -> list:
+
+    possible_category_df = pd.read_csv(PROJECT_ROOT / "assets" / "voc_category_final.csv")
+    possible_category_list = [f"{row['대분류']}__{row['중분류']}__{row['소분류']}" for _, row in possible_category_df.iterrows()]
+
+    possible_bug_df = pd.read_csv(PROJECT_ROOT / "assets" / "bugs_df.csv")
+    possible_bug_types = [row['BugsNm'] for _, row in possible_bug_df.iterrows()]
     """
     Convert CESCO data to instruction-input-output format.
     
@@ -29,11 +36,14 @@ def convert_to_instruction_format(data: list) -> list:
     instruction = """다음 고객의 민원 내용을 분석하여 JSON 형식으로 응답해주세요. 다음 정보를 포함해야 합니다:
 1. claim_status: 클레임 여부 (claim 또는 non-claim)
 2. summary: 민원 내용 요약
-3. bug_type: 해충 종류 (해충 관련인 경우만, 없으면 null)
+3. bug_type: 해충 종류 (해충 관련인 경우만, 없으면 null) (Choose one from {possible_bug_types})
 4. keywords: 주요 키워드 리스트
-5. categories: 분류 카테고리 리스트
-6. evidences: 근거가 되는 문장 리스트"""
-    
+5. categories: 분류 카테고리 리스트 (Choose maximum 5 from [{possible_categories}])
+6. evidences: 근거가 되는 문장 리스트""".format(
+        possible_bug_types=", ".join(possible_bug_types),
+        possible_categories=", ".join(possible_category_list)
+    )
+
     formatted_data = []
     
     for item in data:
