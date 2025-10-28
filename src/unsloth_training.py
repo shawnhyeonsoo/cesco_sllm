@@ -376,13 +376,13 @@ def main():
     # Get 3 random samples from training data for testing
     import random
     random.seed(42)
-    test_indices = random.sample(range(len(train_dataset)), min(3, len(train_dataset)))
-    
+    test_indices = random.sample(range(len(test_dataset)), min(3, len(test_dataset)))
+
     test_prompts = []
     test_responses = []
     for idx in test_indices:
         # Get original data (before formatting)
-        sample = train_dataset[idx]
+        sample = test_dataset[idx]
         # Extract instruction and input from the formatted text
         formatted_text = sample["text"]
         
@@ -405,7 +405,9 @@ def main():
             test_responses.append(response_text)
     
     logger.info(f"Created {len(test_prompts)} test prompts for monitoring")
+    logger.info(f"Created {len(test_responses)} test responses for monitoring")
     
+    print("==============================================")
     # Create generation callback
     generation_callback = GenerationCallback(
         tokenizer=tokenizer,
