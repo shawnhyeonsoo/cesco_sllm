@@ -1,0 +1,222 @@
+SOURCE_TABLE,SOURCE_COLUMN,DATA_TYPE,DESCRIPTION,OBJECT_TYPE,사용여부
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,고객코드,varchar,고객 하나를 구분 짓는 고객 일련번호,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,고객명,varchar,고객의 업장명 (혹은 고객명),고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,시설명,varchar,고객의 업장명 외 시설인 경우 시설 명칭 값,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,유형대,char,고객의 유형을 구분하기 위한 대분류 구분 값 (CESCOEIS.dbo.MKTCCSTP 코드),고객,Y
+CESCOEIS.dbo.MKTCCTYP,Ctypldsp,varchar,사용자에게 노출하는 유형대코드의 유형 명칭,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,유형중,char,고객의 유형을 구분하기 위한 중분류 구분 값 (CESCOEIS.dbo.MKTCCTYP 코드),고객,Y
+CESCOEIS.dbo.MKTCCTYP,Cstpmdsp,varchar,사용자에게 노출하는 유형중코드의 유형 명칭,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,대표자명,varchar,고객이 사업체 혹은 업장인 경우 대표자의 명칭,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,우편번호,char,고객의 주소의 우편번호 값,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,주소1,nvarchar,고객의 주소 중 주소 API(행정안전부)로 정제된 주소 값,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,주소2,nvarchar,고객의 주소중 정제된 주소 값 외 상세한 주소 데이터 EX) 101동 102호,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,담당부서,char,고객의 주소로 정제된 담당 서비스 부서 데이터 (EX.송파지사),고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,업태,varchar,사업자 등록증에 명시된 업장의 업태 데이터,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,종목,varchar,사업자 등록증에 명시된 업장의 종목 데이터,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,사업자번호,varchar,사업자 등록증에 명시된 사업자를 구분하는 사업자 일련번호,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,성별,varchar,고객의 성별 (대표자 혹은 작업자 운영 기준이 모호),고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,국적,varchar,고객의 국적 (대표자 혹은 작업자 운영 기준이 모호),고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,신고객분류코드,char,고객의 유형을 세분화 하기위한 고객분류체계,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,업무목적,char,"고객코드의 업무 목적 구분 값 (증빙처, 수금처, 매출처)",고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,종사업자번호,varchar,사업자 등록증에 명시된 종사업자번호,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,업장인허가번호,varchar,사업자 등록증에 명시된 업장인허가번호,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,로켓분류,varchar,"로켓분류 ( R001 ~ R007, R010 ~ R017 )",고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,위쳌매장명,varchar,위쳌에 적용된 매장명,고객,Y
+CESCOEIS.dbo.TB_고객 / CESCOEIS.dbo.TB_단독고객,등록일자,varchar,위쳌에 적용된 매장명,고객,Y
+CESCOEIS.dbo.TB_고객사위치,위도,float,위도,고객,Y
+CESCOEIS.dbo.TB_고객사위치,경도,float,경도,고객,Y
+CESCOEIS.dbo.TB_고객사위치,UTMK_X,float,UTMK_X좌표,고객,Y
+CESCOEIS.dbo.TB_고객사위치,UTMK_Y,float,UTMK_Y좌표,고객,Y
+CESCOEIS.dbo.TB_신고객분류체계_코드,분류명,varchar,사용자가 확인할 수 있는 분류의 분류명칭,고객,Y
+CESCOEIS.dbo.TB_신고객분류체계_코드,부모키,char,해당 분류코드의 부모코드 값 (lv4 까지 구성 가능),고객,Y
+CESCOEIS.dbo.TB_신고객분류체계_코드,분류명,varchar,사용자가 확인할 수 있는 분류의 분류명칭,고객,Y
+CESCOEIS.dbo.TB_신고객분류체계_코드,부모키,char,해당 분류코드의 부모코드 값 (lv4 까지 구성 가능),고객,Y
+CESCOEIS.dbo.TB_신고객분류체계_코드,분류명,varchar,사용자가 확인할 수 있는 분류의 분류명칭,고객,Y
+CESCOEIS.dbo.TB_신고객분류체계_코드,부모키,char,해당 분류코드의 부모코드 값 (lv4 까지 구성 가능),고객,Y
+CESCOEIS.dbo.TB_신고객분류체계_코드,분류명,varchar,사용자가 확인할 수 있는 분류의 분류명칭,고객,Y
+CESCOEIS.dbo.TB_신계약_마스타,계약일련번호,varchar,계약 하나를 구분하는 계약일련번호,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,고객코드,varchar,고객 하나를 구분하는 고객일련번호,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,계약일자,varchar,고객과의 계약이 체결된 체결일자,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,접수일자,varchar,계약을 접수한 접수일자,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,접수순번,int,계약을 접수한 접수순번 (고객센터),계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,설치요청일자,varchar,장비계약일 때 고객이 요청한 설치요청일자,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,설치요청사항,varchar,장비계약일 때 고객이 요청한 설치요청사항,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,계약특이사항,varchar,계약 시 계약의 특이사항,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,사용여부,bit,사용여부를 판단하는 기준 값,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,등록일자,varchar,계약을 시스템에 등록한 등록일자,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,수정일자,varchar,계약을 시스템에서 수정한 수정일자,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,해약일련번호,uniqueidentifier,해약 한 건을 구분하는 해약일련번호,계약,Y
+CESCOEIS.dbo.TB_신계약_마스타,재계약여부,varchar,재계약으로 연장되는 계약을 판단하기 위한 구분 값,계약,Y
+CESCOEIS.dbo.TB_신계약_상세,계약대상,varchar,계약된 상품 하나를 구분하는 상품코드,계약,Y
+CESCOEIS.dbo.TB_신계약_상세,순번,int,계약된 상품이 중복되는 경우 구분 짓는 순번,계약,Y
+CESCOEIS.dbo.TB_신계약_상세,옵션코드,varchar,"계약된 장비/서비스의 의무사용기간,방문주기 등 정보를 담고 있는 구분 코드",계약,Y
+CESCOEIS.dbo.TB_신계약_상세,계약유형,varchar,"계약된 상품별 계약의 유형을 구분 짓는 유형 코드 (신규계약, 거래중재계약, 해약중재계약 등)",계약,Y
+CESCOEIS.dbo.TB_신계약_상세,계약종류,varchar,"계약된 상품별 방문주기를 구분하는 구분코드 (매월, 격월, …)",계약,Y
+CESCOEIS.dbo.TB_신계약_상세,시작일자,varchar,계약된 상품별 계약 유효 시작일자,계약,Y
+CESCOEIS.dbo.TB_신계약_상세,종료일자,varchar,계약된 상품별 계약 유효 종료일자,계약,Y
+CESCOEIS.dbo.TB_신계약_상세,면적,float,계약된 상품의 서비스 제공 범위 면적 (평),계약,Y
+CESCOEIS.dbo.TB_신계약_상세,면적M,float,계약된 상품의 서비스 제공 범위 면적 (㎡),계약,Y
+CESCOEIS.dbo.TB_신계약_상세,외곽면적,float,계약된 상품의 외곽 서비스 제공 범위 면적,계약,Y
+CESCOEIS.dbo.TB_신계약_상세,사용여부,bit,해당 데이터에 대한 유효여부 값,계약,Y
+CESCOEIS.dbo.TB_신계약_상세,실적적용여부,bit,계약된 상품의 평가에서의 실적 적용 여부 값,계약,Y
+CESCOEIS.dbo.TB_신계약_상세,해약일자,varchar,계약된 상품이 해약/연장 될 경우 해약/연장일자,계약,Y
+CESCOMIS.dbo.TB_CP_CONTRACTDETAIL_HIS,CONTDIVS,,계약대상 그룹 중분류코드,계약,Y
+CESCOMIS.dbo.TB_CODE,M_nm,,계약대상 그룹 중분류명,계약,Y
+CESCOMIS.dbo.TB_CP_CONTRACTDETAIL_HIS,CONTLATY,,계약대상 그룹 대분류코드,계약,Y
+CESCOMIS.dbo.TB_CODE,L_nm,,계약대상 그룹 대분류명,계약,Y
+CESCOEIS.DBO.TB_VOC_Master,RCNO,char,접수번호,VOC,Y
+CESCOEIS.DBO.TB_VOC_Master,RCDT,char,접수일자,VOC,Y
+CESCOEIS.DBO.TB_VOC_Master,RCTM,char,접수시간,VOC,Y
+CESCOEIS.DBO.TB_VOC_Master,MVCT,char,대표대분류,VOC,Y
+CESCOEIS.DBO.TB_VOC_Master,MVID,char,대표처리담당자,VOC,Y
+CESCOEIS.DBO.TB_VOC_Master,BSTP,char,업종구분,VOC,Y
+CESCOEIS.DBO.TB_VOC_Master,CTCD,varchar,고객코드,VOC,Y
+CESCOEIS.DBO.TB_VOC_Master,CTDP,char,고객담당부서,VOC,Y
+CESCOEIS.DBO.TB_VOC_Master,CMMO,varchar,접수내용,VOC,Y
+CESCOEIS.DBO.TB_VOC_Master,INDT,smalldatetime,등록일시,VOC,Y
+CESCOEIS.DBO.TB_VOC_Master,RTID,char,접수시점담당자,VOC,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,CUSTID,varchar,고객 하나를 구분하는 고객일련번호,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,ActDate_Start,smalldatetime,활동을 진행한 시작일시,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,ActDate_End,smalldatetime,활동을 완료한 종료일시,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,CONTACTYPE,varchar,"고객 접촉 구분 코드 (외근, 내근..)",업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,JOBTYPE,varchar,고객 업무 구분 코드 (고객관리 ..),업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,JOBDETTYPE,varchar,"고객 업무 세부 구분 코드 (신규 고객, 기존고객…)",업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,ACTTYPE,varchar,"고객 활동 구분 코드 (계약, 경쟁사 …)",업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,CSELRESULT,varchar,"고객 상담결과 구분 코드 (계약확정, 계약 가능…)",업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,FUTUREPLAN,varchar,"고객 활동 향후 계획 구분 코드(사전홍보, 진단설계 ..)",업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,Area_Pyeong,float,고객의 예상면적 평수,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,Area_M,float,고객의 예상면적 m2,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,CounselContent,varchar,고객과 상담을 진행한 상담진행내용,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,SalesPlanID,int,영업계획 일련번호,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,SalesTransYN,char,영업 계획 여부,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,SalesTransDate,char,영업계획일자,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,SalesTransSEQN,smallint,영업계획 순번 일련번호,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,FreeDiagnosisYN,char,무료진단 여부,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,FreeDiagnosisSEQN,smallint,무료진단 접수 순번 일련번호,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,DIARTYPE,char,"일지의 구분코드 (001 : 업무일지, 002 : 팀장일지 …)",업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,USDT,datetime,등록일시,업무일지,Y
+CESCOSFA.dbo.TB_SALESACTIVITY_RECORD,UPDT,datetime,수정일시,업무일지,Y
+IEIS.dbo.TB_CUST_CONTACT_HIS,SEQ,int,접촉이력순번,접촉이력,Y
+IEIS.dbo.TB_CUST_CONTACT_HIS,CONTACT_GBN,varchar,접촉구분,접촉이력,Y
+IEIS.dbo.TB_CUST_CONTACT_HIS,CUSTCODE,varchar,고객코드,접촉이력,Y
+IEIS.dbo.TB_CUST_CONTACT_HIS,CONTENT,varchar,내용,접촉이력,Y
+IEIS.dbo.TB_CUST_CONTACT_HIS,USE_YN,char,사용여부,접촉이력,Y
+IEIS.dbo.TB_CUST_CONTACT_HIS,USDT,datetime,등록일시,접촉이력,Y
+CESCOEIS.dbo.TB_일정통화결과,작업일자,varchar,,일정통화결과,Y
+CESCOEIS.dbo.TB_일정통화결과,고객코드,varchar,,일정통화결과,Y
+CESCOEIS.dbo.TB_일정통화결과,통화일자,varchar,,일정통화결과,Y
+CESCOEIS.dbo.TB_일정통화결과,통화결과,varchar,,일정통화결과,Y
+CESCOEIS.dbo.TB_일정통화결과,접수일자,varchar,,일정통화결과,Y
+CESCOEIS.dbo.TB_일정통화결과,업종구분,varchar,,일정통화결과,Y
+CESCOEIS.dbo.TB_일정통화결과,통화시간,varchar,,일정통화결과,Y
+CESCOEIS.dbo.TB_일정통화결과,통화내용,varchar,,일정통화결과,Y
+CESCOEIS.dbo.TB_일정통화결과,예약일자,varchar,,일정통화결과,Y
+CESCOEIS.dbo.TB_일정통화결과,등록일자,datetime,,일정통화결과,Y
+CESCOEIS.dbo.TB_미작업사유,SR번호,char,,미작업사유,Y
+CESCOEIS.dbo.TB_미작업사유,작업일자,char,,미작업사유,Y
+CESCOEIS.dbo.TB_미작업사유,업종구분,char,,미작업사유,Y
+CESCOEIS.dbo.TB_미작업사유,고객코드,varchar,,미작업사유,Y
+CESCOEIS.dbo.TB_미작업사유,미작업사유,char,,미작업사유,Y
+CESCOEIS.dbo.TB_미작업사유,미작업사유2,char,,미작업사유,Y
+CESCOEIS.dbo.TB_미작업사유,미작업내용,varchar,,미작업사유,Y
+CESCOEIS.dbo.TB_미작업사유,접수일자,char,,미작업사유,Y
+CESCOEIS.dbo.TB_미작업사유,접수시간,varchar,,미작업사유,Y
+CESCOEIS.dbo.TB_미작업사유,등록일자,char,,미작업사유,Y
+CESCOSFA.dbo.TB_Sales_Toss,CTCD,varchar,고객 하나를 구분하는 고객일련번호,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,TSDT,char,통합이관 이관일자,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,TSGD,varchar,통합이관 이관등급 코드,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,TSTP,varchar,통합이관 이관구분 코드,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,협의내용,varchar,접촉시 고객의 관심 상품 내용 및 특이사항 내용,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,AMYN,bit,영업사원 배정했는지 여부,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,FCDT,varchar,이관접수 이후 첫 접촉일자,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,CCYN,bit,이관접수 후 접촉했는지에 대한 여부,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,DNDT,varchar,이관접수 후 진단일자,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,DNYN,bit,이관접수 후 진단했는지에 대한 여부,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,CTYN,bit,계약까지 완료됐는지 여부,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,CTDT,varchar,계약까지 완료됐을 경우 계약일자,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,TSYN,bit,이관접수 건 유효여부 (취소됐을경우 0),감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,INDT,datetime,등록일시,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,UPDT,datetime,수정일시,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,TSTD,varchar,고객의 이관당시 고객구분 ,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,PGCD,char,이관 건의 현재 진행상태 구분코드,감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,SFCD,char,"서비스만족도 등급 (A, B, C …)",감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,ITCD,char,"고객의 관심도 정도 등급화 코드 (A, B, C …)",감동포인트,Y
+CESCOSFA.dbo.TB_Sales_Toss,IPPT,varchar,고객의 서비스 만족도에 따른 만족내용,감동포인트,Y
+CESCOEIS.dbo.TB_월별미수내역,고객코드,varchar,,미수내역,Y
+CESCOEIS.dbo.TB_월별미수내역,미수년월,char,,미수내역,Y
+CESCOEIS.dbo.TB_월별미수내역,전월매출,float,,미수내역,Y
+CESCOEIS.dbo.TB_월별미수내역,당월매출,float,,미수내역,Y
+CESCOEIS.dbo.TB_월별미수내역,미수월수,tinyint,,미수내역,Y
+CESCOEIS.dbo.TB_월별미수내역,미수금액,float,,미수내역,Y
+CESCOEIS.dbo.TB_월별미수내역,미수월분,varchar,,미수내역,Y
+CESCOEIS.dbo.TB_월별미수내역,대손금액,float,,미수내역,Y
+CESCOEIS.dbo.TB_월별미수내역,미수구분,char,Y만 봐도 되지 않을까 싶습니다.,미수내역,Y
+CESCOEIS.dbo.TB_월별미수내역,신규고객구분,char,Y만 봐도 되지 않을까 싶습니다.,미수내역,
+IEIS.dbo.TB_WR_TOWR,TOWRNO,char,서비스 작업번호,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,CUSTCODE,varchar,고객코드,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,CUSTTYPE,char,고객구분,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,WORKYMD,char,작업일자,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,WORKSEQN,smallint,작업횟수,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,WORKTYPE,char,작업유형,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,CONFYN,bit,확정여부,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,CANCYN,bit,취소여부,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,VLYN,bit,사용여부,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,USID,char,등록자,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,USDT,datetime,등록일자,서비스내역,Y
+IEIS.dbo.TB_WR_TOWR,UPDT,datetime,수정일자,서비스내역,Y
+IEIS.dbo.TB_WR_TOWRDETL,CONTTARG,char,계약대상,서비스내역,Y
+IEIS.dbo.TB_WR_TOWRDETL,WORKCLAS,char,작업구분,서비스내역,Y
+IEIS.dbo.TB_WR_TOWRDETL,WORKYN,bit,작업여부,서비스내역,Y
+IEIS.dbo.TB_WR_TOWRDETL,VLYN,bit,유효여부,서비스내역,Y
+IEIS.dbo.TB_WR_TOWRDETL,USDT,datetime,등록일자,서비스내역,Y
+IEIS.dbo.TB_WR_TOWRDETL,UPDT,datetime,수정일자,서비스내역,Y
+IEIS.dbo.TB_WR_PSWR,PSWRNO,char,개인 작업번호,서비스내역,Y
+IEIS.dbo.TB_WR_PSWR,FRTIME,datetime,서비스시작시간,서비스내역,Y
+IEIS.dbo.TB_WR_PSWR,TOTIME,datetime,서비스종료시간,서비스내역,Y
+IEIS.dbo.TB_WR_PSWR,CONFYN,bit,확정여부,서비스내역,Y
+IEIS.dbo.TB_WR_PSWR,VLYN,bit,사용여부,서비스내역,Y
+IEIS.dbo.TB_WR_PSWR,USDT,datetime,등록일자,서비스내역,Y
+IEIS.dbo.TB_WR_PSWR,UPDT,datetime,수정일자,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,DIVSENUM,varchar,구획번호,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,OBJTK,varchar,장비일련번호,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,PESTCD,char,해충코드,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,PSOCTPCD,char,상태코드,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,OCPESCNT,int,개체수,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,VLYN,bit,사용구분,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,USDT,datetime,등록일자,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,UPDT,datetime,수정일자,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,DOCCNT,int,해충 마릿수,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,CUSTCODE,varchar,고객코드,서비스내역,Y
+IEIS.dbo.TB_VL_VALUPEMN,WORKYMD,char,작업일자,서비스내역,Y
+CX_CDM.dbo.DA_M_SURV_DATA,SDAY,date,기준일자,만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,SURV_CD,int,설문번호 (6:서비스 / 7: 설치A/S / 39: 회수및철거),만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,OBJT_CD,varchar,서비스번호( TOWRNO ),만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,CUSTCODE,varchar,고객코드,만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,CUSTNAME,varchar,고객명,만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,COMP_DT,varchar,완료일시,만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,SERVICE_DD,date,서비스일자,만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,COMP_USR_ID,varchar,작업사원 사번,만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,CONTTARG,varchar,계약대상,만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,AVG_CSI_SCORE,float,평균점수 (3점 이하는 불만족),만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,CONTENTS,char,입력내용 (고객이 직접 작성한 내용 - 개선사항 등 요구사항),만족도조사,Y
+CX_CDM.dbo.DA_M_SURV_DATA,LOAD_DT,datetime,적재일시,만족도조사,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,SDAY,date,구매일자,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,SMONTH_CD,char,구매월,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,SALE_GBN_CD,varchar,"OFFLINE, COMPANY, ONLINE, CESMALL",마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,SALE_GBN_NM,varchar,"오프라인, 현장, 입점몰, 세스코몰",마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,SALE_GBN_DETAIL_CD,varchar,"HP, SC, BC, SD, CLC, OFFLINE, CESMALL, 그 외 고객코드형식",마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,SALE_GBN_DETAIL_NM,varchar,"오픈마켓, 와디즈, 오프라인, 세스코몰, 
+HP(홈케어프로), SC(서비스 컨설턴트), BC(법인사업부),
+CLC(세스코라이프케어), SD(서비스 디자이너),",마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,ORDER_CODE,numeric,주문번호,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,ORDER_SEQUENCE,varchar,여러 상품 주문시(동일한 주문번호) row 구분,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,BUY_KIND,varchar,TP: 구매 / TC: 취소,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,BUY_KIND_NM,varchar,구매 / 취소,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,REAL_KIND,int,1인 값만 조회,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,USER_ID,varchar,SALE_GBN_NM이 현장인 경우 고객코드 / 세스몰의 경우 ID 번호,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,ITEM_CODE,varchar,상품 코드번호,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,ITEM_NAME,nvarchar,상품명,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,PRICE_AMOUNT,numeric,정상가,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,QUANTITY,numeric,주문 수량,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,LOAD_DT,datetime,생성일시,마이랩구매이력,Y
+CX_CDM.dbo.DA_M_MYLAB_PROFIT_DAILY,MEMBER_CODE,varchar,SALE_GBN_NM이 세스몰인 경우 고객코드,마이랩구매이력,Y
