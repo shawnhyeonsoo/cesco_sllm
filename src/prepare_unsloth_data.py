@@ -64,6 +64,10 @@ def convert_to_instruction_format(data: list) -> list:
 
         if "기타__기타__기타" in output_dict["categories"]:
             output_dict["categories"].remove("기타__기타__기타")
+            ## remove category with '기타' in any part
+            output_dict["categories"] = [
+                cat for cat in output_dict["categories"] if "기타" not in cat
+            ]
             if not output_dict["categories"]:
                 continue  # Skip if no valid categories left
         formatted_item = {
