@@ -39,7 +39,7 @@ def convert_to_instruction_format(data: list) -> list:
     - output: JSON response with analysis
     """
     instruction = """다음 고객의 민원 내용을 분석하여 JSON 형식으로 응답해주세요. 다음 정보를 포함해야 합니다:
-1. claim_status: 클레임 여부 (claim 또는 non-claim)
+1. is_claim: 클레임 여부 (claim 또는 non-claim)
 2. summary: 민원 내용 요약
 3. bug_type: 해충 종류 (해충 관련인 경우만, 없으면 null) (Choose one from {possible_bug_types})
 4. keywords: 주요 키워드 리스트
@@ -54,7 +54,7 @@ def convert_to_instruction_format(data: list) -> list:
     for item in data:
         # Create output JSON
         output_dict = {
-            "claim_status": item.get("claim_status", ""),
+            "is_claim": item.get("claim_status", ""),
             "summary": item.get("summary", ""),
             "bug_type": item.get("bug_type"),
             "keywords": item.get("keywords", []),
