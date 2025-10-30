@@ -366,7 +366,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     # Model arguments
-    parser.add_argument("--model_name", type=str, default="unsloth/Meta-Llama-3.1-8B")
+    parser.add_argument("--model_name", type=str, default="Qwen/Qwen3-8B")
     parser.add_argument("--max_seq_length", type=int, default=8096)
     parser.add_argument("--load_in_4bit", type=bool, default=True)
 
