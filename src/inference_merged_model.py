@@ -93,13 +93,49 @@ def parse_args():
 
 def load_model_and_tokenizer(model_path, use_unsloth=True):
     """Load the merged model and tokenizer."""
-    logger.info(f"Loading model from {model_path}")
+    logger.info("=" * 80)
+    logger.info("MODEL CHECKPOINT LOADING DEBUG")
+    logger.info("=" * 80)
+    logger.info(f"Loading model from: {model_path}")
 
-    # Check if model path exists
-    if not Path(model_path).exists():
+    # Check if model path exists and list contents
+    model_path_obj = Path(model_path)
+    if not model_path_obj.exists():
         raise FileNotFoundError(f"Model path does not exist: {model_path}")
 
+    # Debug: List files in model directory
+    logger.info(f"Model directory exists: {model_path_obj.exists()}")
+    logger.info(f"Model directory is directory: {model_path_obj.is_dir()}")
+
+    if model_path_obj.is_dir():
+        model_files = list(model_path_obj.glob("*"))
+        logger.info(f"Files in model directory ({len(model_files)} total):")
+        for file in sorted(model_files):
+            file_size = file.stat().st_size / (1024 * 1024) if file.is_file() else 0
+            logger.info(
+                f"  - {file.name} ({'dir' if file.is_dir() else f'{file_size:.2f}MB'})"
+            )
+
+        # Check for essential model files
+        essential_files = ["config.json", "tokenizer.json", "tokenizer_config.json"]
+        model_weight_files = list(model_path_obj.glob("*.safetensors")) + list(
+            model_path_obj.glob("*.bin")
+        )
+
+        logger.info("Essential files check:")
+        for essential_file in essential_files:
+            exists = (model_path_obj / essential_file).exists()
+            logger.info(f"  - {essential_file}: {'✓' if exists else '✗'}")
+
+        logger.info(f"Model weight files found: {len(model_weight_files)}")
+        for weight_file in model_weight_files:
+            file_size = weight_file.stat().st_size / (1024 * 1024 * 1024)  # GB
+            logger.info(f"  - {weight_file.name}: {file_size:.2f}GB")
+
     # Try loading with Unsloth first if available (for better compatibility)
+    model = None
+    tokenizer = None
+
     if UNSLOTH_AVAILABLE and use_unsloth:
         try:
             logger.info("Attempting to load with Unsloth FastLanguageModel...")
@@ -111,28 +147,131 @@ def load_model_and_tokenizer(model_path, use_unsloth=True):
             )
             # Set model to inference mode
             FastLanguageModel.for_inference(model)
-            logger.info("Model loaded successfully with Unsloth!")
+            logger.info("✓ Model loaded successfully with Unsloth!")
+
+            # Debug model info
+            logger.info(f"Model type: {type(model).__name__}")
+            logger.info(f"Model device: {next(model.parameters()).device}")
+            logger.info(f"Model dtype: {next(model.parameters()).dtype}")
+
         except Exception as e:
-            logger.warning(f"Failed to load with Unsloth: {e}")
+            logger.warning(f"✗ Failed to load with Unsloth: {e}")
             logger.info("Falling back to standard transformers loading...")
             use_unsloth = False
 
     # Fallback to standard transformers loading
     if not (UNSLOTH_AVAILABLE and use_unsloth):
         logger.info("Loading with standard transformers...")
-        tokenizer = AutoTokenizer.from_pretrained(model_path)
-        model = AutoModelForCausalLM.from_pretrained(
-            model_path,
-            torch_dtype=torch.float16,
-            device_map="auto",
-            trust_remote_code=True,
-        )
-        logger.info("Model loaded successfully with transformers!")
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(model_path)
+            logger.info(f"✓ Tokenizer loaded: {type(tokenizer).__name__}")
+
+            model = AutoModelForCausalLM.from_pretrained(
+                model_path,
+                torch_dtype=torch.float16,
+                device_map="auto",
+                trust_remote_code=True,
+            )
+            logger.info("✓ Model loaded successfully with transformers!")
+
+            # Debug model info
+            logger.info(f"Model type: {type(model).__name__}")
+            logger.info(f"Model device: {next(model.parameters()).device}")
+            logger.info(f"Model dtype: {next(model.parameters()).dtype}")
+
+        except Exception as e:
+            logger.error(f"✗ Failed to load with transformers: {e}")
+            raise
+
+    # Debug tokenizer info
+    logger.info("=" * 40)
+    logger.info("TOKENIZER DEBUG INFO")
+    logger.info("=" * 40)
+    logger.info(f"Tokenizer type: {type(tokenizer).__name__}")
+    logger.info(f"Vocab size: {tokenizer.vocab_size}")
+    logger.info(f"Model max length: {tokenizer.model_max_length}")
+    logger.info(f"Pad token: {tokenizer.pad_token} (ID: {tokenizer.pad_token_id})")
+    logger.info(f"EOS token: {tokenizer.eos_token} (ID: {tokenizer.eos_token_id})")
+    logger.info(f"BOS token: {tokenizer.bos_token} (ID: {tokenizer.bos_token_id})")
+    logger.info(f"UNK token: {tokenizer.unk_token} (ID: {tokenizer.unk_token_id})")
 
     # Set pad token if not set
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
+        logger.info("✓ Pad token set to EOS token")
+
+    # Debug model parameters
+    logger.info("=" * 40)
+    logger.info("MODEL DEBUG INFO")
+    logger.info("=" * 40)
+
+    if hasattr(model, "config"):
+        config = model.config
+        logger.info(
+            f"Model architecture: {config.architectures if hasattr(config, 'architectures') else 'Unknown'}"
+        )
+        logger.info(
+            f"Hidden size: {config.hidden_size if hasattr(config, 'hidden_size') else 'Unknown'}"
+        )
+        logger.info(
+            f"Num layers: {config.num_hidden_layers if hasattr(config, 'num_hidden_layers') else 'Unknown'}"
+        )
+        logger.info(
+            f"Num attention heads: {config.num_attention_heads if hasattr(config, 'num_attention_heads') else 'Unknown'}"
+        )
+        logger.info(
+            f"Vocab size: {config.vocab_size if hasattr(config, 'vocab_size') else 'Unknown'}"
+        )
+        logger.info(
+            f"Max position embeddings: {config.max_position_embeddings if hasattr(config, 'max_position_embeddings') else 'Unknown'}"
+        )
+
+    # Count total parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    logger.info(f"Total parameters: {total_params:,}")
+    logger.info(f"Trainable parameters: {trainable_params:,}")
+    logger.info(f"Non-trainable parameters: {total_params - trainable_params:,}")
+
+    # Test a simple forward pass to verify model works
+    logger.info("=" * 40)
+    logger.info("MODEL FUNCTIONALITY TEST")
+    logger.info("=" * 40)
+
+    try:
+        test_input = "Hello, this is a test."
+        test_tokens = tokenizer(test_input, return_tensors="pt").to(model.device)
+        logger.info(f"Test input: '{test_input}'")
+        logger.info(f"Test tokens shape: {test_tokens['input_ids'].shape}")
+        logger.info(f"Test tokens: {test_tokens['input_ids'].tolist()}")
+
+        with torch.no_grad():
+            outputs = model(**test_tokens)
+            logger.info("✓ Model forward pass successful!")
+            logger.info(f"Output logits shape: {outputs.logits.shape}")
+            logger.info(f"Output logits dtype: {outputs.logits.dtype}")
+
+            # Test generation
+            generated = model.generate(
+                **test_tokens,
+                max_new_tokens=5,
+                do_sample=False,
+                pad_token_id=tokenizer.pad_token_id,
+                eos_token_id=tokenizer.eos_token_id,
+            )
+            generated_text = tokenizer.decode(generated[0], skip_special_tokens=True)
+            logger.info("✓ Model generation test successful!")
+            logger.info(f"Generated text: '{generated_text}'")
+
+    except Exception as e:
+        logger.error(f"✗ Model functionality test failed: {e}")
+        raise
+
+    logger.info("=" * 80)
+    logger.info("MODEL CHECKPOINT LOADING COMPLETE")
+    logger.info("=" * 80)
 
     return model, tokenizer
 
@@ -206,10 +345,21 @@ def run_inference(model, tokenizer, dataset, args):
 
             # Tokenize
             inputs = tokenizer(
-                prompt, return_tensors="pt", truncation=True, max_length=4096
+                prompt, return_tensors="pt", truncation=True, max_length=8096
             ).to(model.device)
 
-            # Generate
+            # Debug tokenization for first few samples
+            if i < 3:
+                logger.info(f"Sample {i} tokenization debug:")
+                logger.info(f"  Prompt length: {len(prompt)} characters")
+                logger.info(f"  Input tokens shape: {inputs['input_ids'].shape}")
+                logger.info(f"  Input tokens: {inputs['input_ids'].tolist()}")
+
+            # Generate with debug info
+            logger.info(
+                f"Sample {i}: Generating with max_new_tokens={args.max_new_tokens}, temperature={args.temperature}"
+            )
+
             outputs = model.generate(
                 **inputs,
                 max_new_tokens=args.max_new_tokens,
@@ -220,17 +370,57 @@ def run_inference(model, tokenizer, dataset, args):
                 eos_token_id=tokenizer.eos_token_id,
             )
 
+            # Debug generation results
+            input_length = inputs["input_ids"].shape[1]
+            output_length = outputs.shape[1]
+            new_tokens_generated = output_length - input_length
+
+            logger.info(f"Sample {i} generation debug:")
+            logger.info(f"  Input length: {input_length} tokens")
+            logger.info(f"  Output length: {output_length} tokens")
+            logger.info(
+                f"  New tokens generated: {new_tokens_generated} / {args.max_new_tokens} max"
+            )
+
             # Decode response
             generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+            # Debug decoding for first few samples
+            if i < 3:
+                logger.info(f"Sample {i} decoding debug:")
+                logger.info(
+                    f"  Generated text length: {len(generated_text)} characters"
+                )
+                logger.info(f"  Generated text preview: {generated_text[:200]}...")
+                logger.info(
+                    f"  Generated text contains '### Response:': {'### Response:' in generated_text}"
+                )
 
             # Extract only the response part
             if "### Response:" in generated_text:
                 response = generated_text.split("### Response:")[-1].strip()
+                extraction_method = "split on '### Response:'"
             else:
                 response = generated_text[len(prompt) :].strip()
+                extraction_method = "remove prompt prefix"
+
+            # Debug response extraction
+            logger.info(f"Sample {i} response extraction:")
+            logger.info(f"  Method: {extraction_method}")
+            logger.info(f"  Response length: {len(response)} characters")
+            logger.info(f"  Response preview: {response[:150]}...")
 
             # Parse JSON from response
             parsed_json, raw_response = extract_json_from_response(response)
+
+            # Debug JSON parsing
+            logger.info(f"Sample {i} JSON parsing:")
+            logger.info(f"  JSON found: {parsed_json is not None}")
+            if parsed_json:
+                logger.info(f"  Parsed fields: {list(parsed_json.keys())}")
+                logger.info(f"  Claim status: {parsed_json.get('claim_status', 'N/A')}")
+            else:
+                logger.info(f"  Raw response (no JSON): {raw_response[:100]}...")
 
             # Parse ground truth JSON
             try:
@@ -311,30 +501,33 @@ def run_inference(model, tokenizer, dataset, args):
                         # Step identification
                         "sample_id": i,
                         "step": i + 1,
-                        
                         # Input information
                         "instruction": instruction,
                         "input_text": input_text,
                         "prompt_length": len(prompt),
-                        
                         # Model output
                         "raw_generated_text": generated_text,
                         "extracted_response": raw_response,
                         "response_length": len(raw_response),
-                        
                         # JSON parsing results
                         "valid_json": 1.0 if parsed_json is not None else 0.0,
-                        "parsed_prediction": json.dumps(parsed_json, ensure_ascii=False) if parsed_json else "null",
-                        
+                        "parsed_prediction": json.dumps(parsed_json, ensure_ascii=False)
+                        if parsed_json
+                        else "null",
                         # Ground truth
                         "ground_truth": ground_truth,
-                        "ground_truth_parsed": json.dumps(gt_json, ensure_ascii=False) if gt_json else "null",
-                        
+                        "ground_truth_parsed": json.dumps(gt_json, ensure_ascii=False)
+                        if gt_json
+                        else "null",
                         # Predictions vs Ground Truth
-                        "pred_claim_status": result.get("pred_claim_status") or "unknown",
+                        "pred_claim_status": result.get("pred_claim_status")
+                        or "unknown",
                         "gt_claim_status": result.get("gt_claim_status") or "unknown",
-                        "claim_match": 1.0 if claim_match else 0.0 if claim_match is False else 0.5,
-                        
+                        "claim_match": 1.0
+                        if claim_match
+                        else 0.0
+                        if claim_match is False
+                        else 0.5,
                         # Additional fields
                         "pred_summary": result.get("pred_summary") or "",
                         "gt_summary": result.get("gt_summary") or "",
@@ -354,7 +547,9 @@ def run_inference(model, tokenizer, dataset, args):
                             pred_cats = json.loads(result["pred_categories"])
                             gt_cats = json.loads(result["gt_categories"])
                             category_match = set(gt_cats).issubset(set(pred_cats))
-                            sample_log["category_match"] = 1.0 if category_match else 0.0
+                            sample_log["category_match"] = (
+                                1.0 if category_match else 0.0
+                            )
                         except Exception:
                             sample_log["category_match"] = 0.0
                     else:
@@ -410,7 +605,7 @@ def run_inference(model, tokenizer, dataset, args):
             columns = [
                 "sample_id",
                 "input_text",
-                "generated_response", 
+                "generated_response",
                 "ground_truth",
                 "pred_claim_status",
                 "gt_claim_status",
@@ -435,21 +630,25 @@ def run_inference(model, tokenizer, dataset, args):
 
             table = wandb.Table(columns=columns, data=table_data)
             wandb.log({"final_inference_results": table})
-            
+
             # Also save a detailed input-output table
             input_output_columns = ["sample_id", "full_input", "full_output"]
             input_output_data = []
-            
+
             for i, sample in enumerate(wandb_samples):
-                input_output_data.append([
-                    sample["sample_id"],
-                    sample["input_text"],
-                    sample["generated_response"]
-                ])
-            
-            input_output_table = wandb.Table(columns=input_output_columns, data=input_output_data)
+                input_output_data.append(
+                    [
+                        sample["sample_id"],
+                        sample["input_text"],
+                        sample["generated_response"],
+                    ]
+                )
+
+            input_output_table = wandb.Table(
+                columns=input_output_columns, data=input_output_data
+            )
             wandb.log({"input_output_pairs": input_output_table})
-            
+
             logger.info("Comprehensive samples logged to W&B successfully!")
 
         except Exception as e:
@@ -616,39 +815,41 @@ def main():
     # Save detailed input-output pairs in readable format
     input_output_path = args.output_csv.replace(".csv", "_input_output_pairs.json")
     input_output_pairs = []
-    
+
     for i, result in enumerate(results):
         pair = {
             "sample_id": i,
             "input": {
                 "instruction": result["instruction"],
-                "input_text": result["input"]
+                "input_text": result["input"],
             },
             "output": {
                 "generated_response": result["generated_response"],
                 "parsed_prediction": result.get("parsed_prediction"),
-                "valid_json": result.get("parsed_prediction") is not None
+                "valid_json": result.get("parsed_prediction") is not None,
             },
             "ground_truth": {
                 "expected_output": result["ground_truth"],
-                "parsed_ground_truth": result.get("ground_truth_parsed")
+                "parsed_ground_truth": result.get("ground_truth_parsed"),
             },
             "evaluation": {
-                "claim_match": result.get("pred_claim_status") == result.get("gt_claim_status") 
-                            if result.get("pred_claim_status") and result.get("gt_claim_status") else None,
+                "claim_match": result.get("pred_claim_status")
+                == result.get("gt_claim_status")
+                if result.get("pred_claim_status") and result.get("gt_claim_status")
+                else None,
                 "pred_claim_status": result.get("pred_claim_status"),
-                "gt_claim_status": result.get("gt_claim_status")
-            }
+                "gt_claim_status": result.get("gt_claim_status"),
+            },
         }
         input_output_pairs.append(pair)
-    
+
     with open(input_output_path, "w", encoding="utf-8") as f:
         json.dump(input_output_pairs, f, ensure_ascii=False, indent=2)
     logger.info(f"Input-output pairs saved to {input_output_path}")
-    
+
     # Print final summary
     logger.info("=" * 80)
-    logger.info("FINAL SUMMARY - INPUT/OUTPUT PAIRS")  
+    logger.info("FINAL SUMMARY - INPUT/OUTPUT PAIRS")
     logger.info("=" * 80)
     for i, pair in enumerate(input_output_pairs):
         logger.info(f"\nSAMPLE {i + 1}:")
