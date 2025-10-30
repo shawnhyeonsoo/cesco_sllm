@@ -60,13 +60,13 @@ def parse_args():
     parser.add_argument(
         "--max_samples",
         type=int,
-        default=None,
+        default=10,
         help="Maximum number of samples to process",
     )
 
     # W&B arguments
     parser.add_argument(
-        "--use_wandb", type=bool, default=False, help="Whether to log to W&B"
+        "--use_wandb", type=bool, default=True, help="Whether to log to W&B"
     )
     parser.add_argument(
         "--wandb_project",
@@ -78,7 +78,7 @@ def parse_args():
     parser.add_argument(
         "--log_samples_to_wandb",
         type=int,
-        default=50,
+        default=0,
         help="Number of samples to log to W&B (0 for all)",
     )
     parser.add_argument(
@@ -292,7 +292,7 @@ def run_inference(model, tokenizer, dataset, args):
 
             results.append(result)
 
-            # Log individual sample to W&B immediately
+            # Enhanced W&B logging with detailed step-by-step information
             if args.use_wandb:
                 try:
                     import wandb
@@ -306,34 +306,47 @@ def run_inference(model, tokenizer, dataset, args):
                             "gt_claim_status"
                         )
 
+                    # Enhanced logging with full model output details
                     sample_log = {
-                        "claim_match": 1.0
-                        if claim_match
-                        else 0.0
-                        if claim_match is False
-                        else 0.5,  # Use numeric values
-                        "valid_json": 1.0 if parsed_json is not None else 0.0,
-                        "pred_claim_status": result.get("pred_claim_status")
-                        or "unknown",
-                        "gt_claim_status": result.get("gt_claim_status") or "unknown",
+                        # Step identification
                         "sample_id": i,
+                        "step": i + 1,
+                        
+                        # Input information
+                        "instruction": instruction,
+                        "input_text": input_text,
+                        "prompt_length": len(prompt),
+                        
+                        # Model output
+                        "raw_generated_text": generated_text,
+                        "extracted_response": raw_response,
+                        "response_length": len(raw_response),
+                        
+                        # JSON parsing results
+                        "valid_json": 1.0 if parsed_json is not None else 0.0,
+                        "parsed_prediction": json.dumps(parsed_json, ensure_ascii=False) if parsed_json else "null",
+                        
+                        # Ground truth
+                        "ground_truth": ground_truth,
+                        "ground_truth_parsed": json.dumps(gt_json, ensure_ascii=False) if gt_json else "null",
+                        
+                        # Predictions vs Ground Truth
+                        "pred_claim_status": result.get("pred_claim_status") or "unknown",
+                        "gt_claim_status": result.get("gt_claim_status") or "unknown",
+                        "claim_match": 1.0 if claim_match else 0.0 if claim_match is False else 0.5,
+                        
+                        # Additional fields
+                        "pred_summary": result.get("pred_summary") or "",
+                        "gt_summary": result.get("gt_summary") or "",
+                        "pred_bug_type": result.get("pred_bug_type") or "",
+                        "gt_bug_type": result.get("gt_bug_type") or "",
+                        "pred_keywords": result.get("pred_keywords") or "[]",
+                        "gt_keywords": result.get("gt_keywords") or "[]",
+                        "pred_categories": result.get("pred_categories") or "[]",
+                        "gt_categories": result.get("gt_categories") or "[]",
+                        "pred_evidences": result.get("pred_evidences") or "[]",
+                        "gt_evidences": result.get("gt_evidences") or "[]",
                     }
-
-                    # Log sample text if requested
-                    if args.log_sample_text:
-                        sample_log.update(
-                            {
-                                "input_text": input_text[:300] + "..."
-                                if len(input_text) > 300
-                                else input_text,
-                                "generated_response": raw_response[:500] + "..."
-                                if len(raw_response) > 500
-                                else raw_response,
-                                "ground_truth_text": ground_truth[:500] + "..."
-                                if len(ground_truth) > 500
-                                else ground_truth,
-                            }
-                        )
 
                     # Add category match if available
                     if result.get("pred_categories") and result.get("gt_categories"):
@@ -341,39 +354,41 @@ def run_inference(model, tokenizer, dataset, args):
                             pred_cats = json.loads(result["pred_categories"])
                             gt_cats = json.loads(result["gt_categories"])
                             category_match = set(gt_cats).issubset(set(pred_cats))
-                            sample_log["category_match"] = (
-                                1.0 if category_match else 0.0
-                            )
+                            sample_log["category_match"] = 1.0 if category_match else 0.0
                         except Exception:
                             sample_log["category_match"] = 0.0
+                    else:
+                        sample_log["category_match"] = 0.0
 
                     # Log with step explicitly set
                     wandb.log(sample_log, step=i)
 
-                    # Debug logging
-                    if i < 5:  # Log first few samples for debugging
-                        logger.info(f"Sample {i} logged to W&B:")
-                        for key, value in sample_log.items():
-                            logger.info(f"  {key}: {value} ({type(value)})")
+                    # Detailed logging for every sample
+                    logger.info("=" * 60)
+                    logger.info(f"SAMPLE {i + 1} - W&B LOGGED")
+                    logger.info("=" * 60)
+                    logger.info(f"Input: {input_text[:200]}...")
+                    logger.info(f"Generated Response: {raw_response[:200]}...")
+                    logger.info(f"Valid JSON: {parsed_json is not None}")
+                    logger.info(f"Claim Match: {claim_match}")
+                    logger.info(f"Predicted Claim: {result.get('pred_claim_status')}")
+                    logger.info(f"Ground Truth Claim: {result.get('gt_claim_status')}")
+                    logger.info("=" * 60)
 
-                    # Store for table logging at the end (only if within limit)
+                    # Store for final table logging
                     if (
                         args.log_samples_to_wandb == 0
                         or len(wandb_samples) < args.log_samples_to_wandb
                     ):
                         wandb_sample = {
                             "sample_id": i,
-                            "input_text": input_text[:500] + "..."
-                            if len(input_text) > 500
-                            else input_text,
+                            "input_text": input_text,
                             "generated_response": raw_response,
                             "ground_truth": ground_truth,
-                            "claim_match": result.get("pred_claim_status")
-                            == result.get("gt_claim_status")
-                            if result.get("pred_claim_status")
-                            and result.get("gt_claim_status")
-                            else None,
+                            "claim_match": claim_match,
                             "valid_json": parsed_json is not None,
+                            "pred_claim_status": result.get("pred_claim_status"),
+                            "gt_claim_status": result.get("gt_claim_status"),
                         }
                         wandb_samples.append(wandb_sample)
 
@@ -384,19 +399,21 @@ def run_inference(model, tokenizer, dataset, args):
             if (i + 1) % 100 == 0:
                 logger.info(f"Processed {i + 1}/{max_samples} samples")
 
-    # Log samples to W&B
+    # Log comprehensive samples table to W&B
     if args.use_wandb and wandb_samples:
         try:
             import wandb
 
             logger.info(f"Logging {len(wandb_samples)} samples to W&B...")
 
-            # Create a W&B table
+            # Create a comprehensive W&B table with input-output pairs
             columns = [
                 "sample_id",
                 "input_text",
-                "generated_response",
+                "generated_response", 
                 "ground_truth",
+                "pred_claim_status",
+                "gt_claim_status",
                 "claim_match",
                 "valid_json",
             ]
@@ -409,14 +426,31 @@ def run_inference(model, tokenizer, dataset, args):
                         sample["input_text"],
                         sample["generated_response"],
                         sample["ground_truth"],
+                        sample.get("pred_claim_status", "unknown"),
+                        sample.get("gt_claim_status", "unknown"),
                         sample["claim_match"],
                         sample["valid_json"],
                     ]
                 )
 
             table = wandb.Table(columns=columns, data=table_data)
-            wandb.log({"inference_samples": table})
-            logger.info("Samples logged to W&B successfully!")
+            wandb.log({"final_inference_results": table})
+            
+            # Also save a detailed input-output table
+            input_output_columns = ["sample_id", "full_input", "full_output"]
+            input_output_data = []
+            
+            for i, sample in enumerate(wandb_samples):
+                input_output_data.append([
+                    sample["sample_id"],
+                    sample["input_text"],
+                    sample["generated_response"]
+                ])
+            
+            input_output_table = wandb.Table(columns=input_output_columns, data=input_output_data)
+            wandb.log({"input_output_pairs": input_output_table})
+            
+            logger.info("Comprehensive samples logged to W&B successfully!")
 
         except Exception as e:
             logger.warning(f"Failed to log samples to W&B: {e}")
@@ -578,6 +612,51 @@ def main():
     with open(metrics_path, "w", encoding="utf-8") as f:
         json.dump(metrics, f, ensure_ascii=False, indent=2)
     logger.info(f"Metrics saved to {metrics_path}")
+
+    # Save detailed input-output pairs in readable format
+    input_output_path = args.output_csv.replace(".csv", "_input_output_pairs.json")
+    input_output_pairs = []
+    
+    for i, result in enumerate(results):
+        pair = {
+            "sample_id": i,
+            "input": {
+                "instruction": result["instruction"],
+                "input_text": result["input"]
+            },
+            "output": {
+                "generated_response": result["generated_response"],
+                "parsed_prediction": result.get("parsed_prediction"),
+                "valid_json": result.get("parsed_prediction") is not None
+            },
+            "ground_truth": {
+                "expected_output": result["ground_truth"],
+                "parsed_ground_truth": result.get("ground_truth_parsed")
+            },
+            "evaluation": {
+                "claim_match": result.get("pred_claim_status") == result.get("gt_claim_status") 
+                            if result.get("pred_claim_status") and result.get("gt_claim_status") else None,
+                "pred_claim_status": result.get("pred_claim_status"),
+                "gt_claim_status": result.get("gt_claim_status")
+            }
+        }
+        input_output_pairs.append(pair)
+    
+    with open(input_output_path, "w", encoding="utf-8") as f:
+        json.dump(input_output_pairs, f, ensure_ascii=False, indent=2)
+    logger.info(f"Input-output pairs saved to {input_output_path}")
+    
+    # Print final summary
+    logger.info("=" * 80)
+    logger.info("FINAL SUMMARY - INPUT/OUTPUT PAIRS")  
+    logger.info("=" * 80)
+    for i, pair in enumerate(input_output_pairs):
+        logger.info(f"\nSAMPLE {i + 1}:")
+        logger.info(f"INPUT: {pair['input']['input_text'][:150]}...")
+        logger.info(f"OUTPUT: {pair['output']['generated_response'][:150]}...")
+        logger.info(f"VALID JSON: {pair['output']['valid_json']}")
+        logger.info(f"CLAIM MATCH: {pair['evaluation']['claim_match']}")
+    logger.info("=" * 80)
 
     # Finish W&B run
     if args.use_wandb:
