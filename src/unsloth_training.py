@@ -740,3 +740,7 @@ def main():
 
         wandb.finish()
         logger.info("W&B run finished.")
+
+
+if __name__ == "__main__":
+    main()
