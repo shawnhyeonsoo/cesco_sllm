@@ -298,31 +298,38 @@ def run_inference(model, tokenizer, dataset, args):
                     import wandb
 
                     # Log individual sample metrics
+                    claim_match = None
+                    if result.get("pred_claim_status") and result.get(
+                        "gt_claim_status"
+                    ):
+                        claim_match = result.get("pred_claim_status") == result.get(
+                            "gt_claim_status"
+                        )
+
                     sample_log = {
-                        f"sample_{i}/claim_match": result.get("pred_claim_status")
-                        == result.get("gt_claim_status")
-                        if result.get("pred_claim_status")
-                        and result.get("gt_claim_status")
-                        else None,
-                        f"sample_{i}/valid_json": parsed_json is not None,
-                        f"sample_{i}/pred_claim_status": result.get(
-                            "pred_claim_status"
-                        ),
-                        f"sample_{i}/gt_claim_status": result.get("gt_claim_status"),
-                        "step": i,
+                        "claim_match": 1.0
+                        if claim_match
+                        else 0.0
+                        if claim_match is False
+                        else 0.5,  # Use numeric values
+                        "valid_json": 1.0 if parsed_json is not None else 0.0,
+                        "pred_claim_status": result.get("pred_claim_status")
+                        or "unknown",
+                        "gt_claim_status": result.get("gt_claim_status") or "unknown",
+                        "sample_id": i,
                     }
 
                     # Log sample text if requested
                     if args.log_sample_text:
                         sample_log.update(
                             {
-                                f"sample_{i}/input": input_text[:300] + "..."
+                                "input_text": input_text[:300] + "..."
                                 if len(input_text) > 300
                                 else input_text,
-                                f"sample_{i}/generated": raw_response[:500] + "..."
+                                "generated_response": raw_response[:500] + "..."
                                 if len(raw_response) > 500
                                 else raw_response,
-                                f"sample_{i}/ground_truth": ground_truth[:500] + "..."
+                                "ground_truth_text": ground_truth[:500] + "..."
                                 if len(ground_truth) > 500
                                 else ground_truth,
                             }
@@ -334,17 +341,20 @@ def run_inference(model, tokenizer, dataset, args):
                             pred_cats = json.loads(result["pred_categories"])
                             gt_cats = json.loads(result["gt_categories"])
                             category_match = set(gt_cats).issubset(set(pred_cats))
-                            sample_log[f"sample_{i}/category_match"] = category_match
+                            sample_log["category_match"] = (
+                                1.0 if category_match else 0.0
+                            )
                         except Exception:
-                            pass
+                            sample_log["category_match"] = 0.0
 
-                    wandb.log(sample_log)
+                    # Log with step explicitly set
+                    wandb.log(sample_log, step=i)
 
                     # Debug logging
                     if i < 5:  # Log first few samples for debugging
-                        logger.info(
-                            f"Logged sample {i} to W&B with keys: {list(sample_log.keys())}"
-                        )
+                        logger.info(f"Sample {i} logged to W&B:")
+                        for key, value in sample_log.items():
+                            logger.info(f"  {key}: {value} ({type(value)})")
 
                     # Store for table logging at the end (only if within limit)
                     if (
