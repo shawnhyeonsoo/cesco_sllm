@@ -293,10 +293,7 @@ def run_inference(model, tokenizer, dataset, args):
             results.append(result)
 
             # Log individual sample to W&B immediately
-            if args.use_wandb and (
-                args.log_samples_to_wandb == 0
-                or len(wandb_samples) < args.log_samples_to_wandb
-            ):
+            if args.use_wandb:
                 try:
                     import wandb
 
@@ -343,22 +340,32 @@ def run_inference(model, tokenizer, dataset, args):
 
                     wandb.log(sample_log)
 
-                    # Store for table logging at the end
-                    wandb_sample = {
-                        "sample_id": i,
-                        "input_text": input_text[:500] + "..."
-                        if len(input_text) > 500
-                        else input_text,
-                        "generated_response": raw_response,
-                        "ground_truth": ground_truth,
-                        "claim_match": result.get("pred_claim_status")
-                        == result.get("gt_claim_status")
-                        if result.get("pred_claim_status")
-                        and result.get("gt_claim_status")
-                        else None,
-                        "valid_json": parsed_json is not None,
-                    }
-                    wandb_samples.append(wandb_sample)
+                    # Debug logging
+                    if i < 5:  # Log first few samples for debugging
+                        logger.info(
+                            f"Logged sample {i} to W&B with keys: {list(sample_log.keys())}"
+                        )
+
+                    # Store for table logging at the end (only if within limit)
+                    if (
+                        args.log_samples_to_wandb == 0
+                        or len(wandb_samples) < args.log_samples_to_wandb
+                    ):
+                        wandb_sample = {
+                            "sample_id": i,
+                            "input_text": input_text[:500] + "..."
+                            if len(input_text) > 500
+                            else input_text,
+                            "generated_response": raw_response,
+                            "ground_truth": ground_truth,
+                            "claim_match": result.get("pred_claim_status")
+                            == result.get("gt_claim_status")
+                            if result.get("pred_claim_status")
+                            and result.get("gt_claim_status")
+                            else None,
+                            "valid_json": parsed_json is not None,
+                        }
+                        wandb_samples.append(wandb_sample)
 
                 except Exception as e:
                     logger.warning(f"Failed to log sample {i} to W&B: {e}")
@@ -483,6 +490,7 @@ def main():
             logger.info(
                 f"W&B initialized: project={args.wandb_project}, run={run_name}"
             )
+            logger.info(f"W&B run URL: {wandb.run.get_url()}")
         except ImportError:
             logger.warning(
                 "W&B requested but not installed. Continuing without W&B logging."
