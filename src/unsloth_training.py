@@ -9,7 +9,6 @@ import argparse
 from tqdm import tqdm
 import logging
 import subprocess
-import wandb
 
 # Install Unsloth if not available
 try:
@@ -87,6 +86,7 @@ class GenerationCallback(TrainerCallback):
         ):
             import json
             import os
+            import wandb
 
             logger.info("\n" + "=" * 80)
             logger.info(f"GENERATION TEST at Step {state.global_step}")
@@ -147,16 +147,18 @@ class GenerationCallback(TrainerCallback):
                 try:
                     output = json.loads(generation_section)
                     # print(json.dumps(output, ensure_ascii=False, indent=2))
-                    wandb.log(
-                        {
-                            f"inference/sample_{i}_ground_truth": wandb.Table(
-                                data=[json.dumps(ground_truth, ensure_ascii=False)]
-                            ),
-                            f"inference/sample_{i}_generation": wandb.Table(
-                                data=[json.dumps(output, ensure_ascii=False)]
-                            ),
-                        }
-                    )
+                    if wandb.run:
+                        wandb.log(
+                            {
+                                f"inference/sample_{i}_ground_truth": wandb.Table(
+                                    data=[json.dumps(ground_truth, ensure_ascii=False)]
+                                ),
+                                f"inference/sample_{i}_generation": wandb.Table(
+                                    data=[json.dumps(output, ensure_ascii=False)]
+                                ),
+                            },
+                            step=state.global_step,
+                        )
                     pred_claim = output["is_claim"]
                     pred_category = output["categories"]
 
@@ -184,8 +186,8 @@ class GenerationCallback(TrainerCallback):
                             set(gt_minor_categories)
                         ):
                             minor_category_accuracy += 1
-                        if set(gt_category).issubset(set(pred_category)):
-                            category_accuracy += 1
+                    if set(gt_category).issubset(set(pred_category)):
+                        category_accuracy += 1
                 except Exception as e:
                     logger.warning(f"Error processing sample {i}: {e}")
                     pass
@@ -203,35 +205,32 @@ class GenerationCallback(TrainerCallback):
                 f"Total Ground Truth Claims: {total_gt_claims}/{total_samples} ({(total_gt_claims / total_samples * 100):.2f}%)"
             )
             # Log to wandb if available
-            try:
-                if wandb.run is not None:
-                    wandb.log(
-                        {
-                            "eval/claim_accuracy": claim_acc_percent,
-                            "eval/category_accuracy": category_acc_percent,
-                            "eval/claim_major_category_accuracy": (
-                                major_category_accuracy / total_gt_claims * 100
-                            )
-                            if total_gt_claims > 0
-                            else 0,
-                            "eval/claim_mid_category_accuracy": (
-                                mid_category_accuracy / total_gt_claims * 100
-                            )
-                            if total_gt_claims > 0
-                            else 0,
-                            "eval/claim_minor_category_accuracy": (
-                                minor_category_accuracy / total_gt_claims * 100
-                            )
-                            if total_gt_claims > 0
-                            else 0,
-                            # "eval/claim_correct": claim_accuracy,
-                            # "eval/category_correct": category_accuracy,
-                            "eval/total_samples": total_samples,
-                            "step": state.global_step,
-                        }
-                    )
-            except ImportError:
-                pass
+            if wandb.run is not None:
+                wandb.log(
+                    {
+                        "eval/claim_accuracy": claim_acc_percent,
+                        "eval/category_accuracy": category_acc_percent,
+                        "eval/claim_major_category_accuracy": (
+                            major_category_accuracy / total_gt_claims * 100
+                        )
+                        if total_gt_claims > 0
+                        else 0,
+                        "eval/claim_mid_category_accuracy": (
+                            mid_category_accuracy / total_gt_claims * 100
+                        )
+                        if total_gt_claims > 0
+                        else 0,
+                        "eval/claim_minor_category_accuracy": (
+                            minor_category_accuracy / total_gt_claims * 100
+                        )
+                        if total_gt_claims > 0
+                        else 0,
+                        # "eval/claim_correct": claim_accuracy,
+                        # "eval/category_correct": category_accuracy,
+                        "eval/total_samples": total_samples,
+                    },
+                    step=state.global_step,
+                )
 
             print("==============================================")
             print(
@@ -278,8 +277,8 @@ class GenerationCallback(TrainerCallback):
                         {
                             "best/claim_accuracy": claim_acc_percent,
                             "best/model_step": state.global_step,
-                            "step": state.global_step,
-                        }
+                        },
+                        step=state.global_step,
                     )
 
                 # Save best model info to file
@@ -300,13 +299,6 @@ class GenerationCallback(TrainerCallback):
                 logger.info(
                     f"Current best claim accuracy: {self.best_claim_accuracy:.2f}% (step {self.best_model_step})"
                 )
-
-            wandb.log(
-                {
-                    "eval/claim_accuracy": claim_acc_percent,
-                    "eval/category_accuracy": category_acc_percent,
-                }
-            )
             """
             model.eval()
             for i, prompt in enumerate(self.test_prompts, 1):
@@ -747,8 +739,4 @@ def main():
         import wandb
 
         wandb.finish()
-        logger.info("W&B run finished")
-
-
-if __name__ == "__main__":
-    main()
+        logger.info("W&B run finished.")
