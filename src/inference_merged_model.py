@@ -1,8 +1,4 @@
-"""
-Inference script for the merged Unsloth model.
-Loads the merged model and runs inference on the test dataset, saving results as CSV.
-"""
-
+from unsloth import FastLanguageModel
 import json
 import argparse
 import pandas as pd
@@ -13,15 +9,8 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from datasets import load_dataset
 
-# Try to import Unsloth for proper model loading
-try:
-    from unsloth import FastLanguageModel
 
-    UNSLOTH_AVAILABLE = True
-except ImportError:
-    UNSLOTH_AVAILABLE = False
-    print("Warning: Unsloth not available. Using standard transformers loading.")
-
+UNSLOTH_AVAILABLE = True
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
