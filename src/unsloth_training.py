@@ -5,7 +5,6 @@ This script uses Unsloth for faster and more memory-efficient fine-tuning.
 
 import os
 import sys
-import json
 import argparse
 from tqdm import tqdm
 import logging
@@ -44,16 +43,25 @@ class GenerationCallback(TrainerCallback):
     """Callback to generate sample outputs during training."""
 
     def __init__(
-        self, tokenizer, test_prompts, test_responses, generate_every_n_steps=100
+        self,
+        tokenizer,
+        test_prompts,
+        test_responses,
+        generate_every_n_steps=100,
+        model_dir="./outputs",
     ):
         self.tokenizer = tokenizer
         self.test_prompts = test_prompts
         self.test_responses = test_responses
         self.generate_every_n_steps = generate_every_n_steps
+        self.model_dir = model_dir
+        self.best_claim_accuracy = 0.0
+        self.best_model_step = 0
         logger.info(
             f"GenerationCallback initialized with {len(test_prompts)} test prompts"
         )
         logger.info(f"Will generate every {generate_every_n_steps} steps")
+        logger.info(f"Best model will be saved to {model_dir}/best_model")
 
     def alpaca_prompt(
         self,
@@ -77,6 +85,9 @@ class GenerationCallback(TrainerCallback):
             state.global_step > 0
             and state.global_step % self.generate_every_n_steps == 0
         ):
+            import json
+            import os
+
             logger.info("\n" + "=" * 80)
             logger.info(f"GENERATION TEST at Step {state.global_step}")
             logger.info("=" * 80)
@@ -173,9 +184,10 @@ class GenerationCallback(TrainerCallback):
                             set(gt_minor_categories)
                         ):
                             minor_category_accuracy += 1
-                    if set(gt_category).issubset(set(pred_category)):
-                        category_accuracy += 1
-                except:
+                        if set(gt_category).issubset(set(pred_category)):
+                            category_accuracy += 1
+                except Exception as e:
+                    logger.warning(f"Error processing sample {i}: {e}")
                     pass
 
             total_samples = len(self.test_prompts)
@@ -228,6 +240,67 @@ class GenerationCallback(TrainerCallback):
             print(
                 f"Category Accuracy: {category_accuracy}/{total_samples} ({category_acc_percent:.2f}%)"
             )
+
+            # Save best model based on claim accuracy
+            if claim_acc_percent > self.best_claim_accuracy:
+                self.best_claim_accuracy = claim_acc_percent
+                self.best_model_step = state.global_step
+
+                # Create best model directory
+                best_model_path = os.path.join(self.model_dir, "best_model")
+                os.makedirs(best_model_path, exist_ok=True)
+
+                logger.info(
+                    f"🎉 NEW BEST CLAIM ACCURACY: {claim_acc_percent:.2f}% (step {state.global_step})"
+                )
+                logger.info(f"Saving best model to {best_model_path}")
+
+                # Save the model and tokenizer
+                model.save_pretrained(best_model_path)
+                self.tokenizer.save_pretrained(best_model_path)
+
+                # Also save merged model for the best checkpoint
+                try:
+                    merged_best_path = os.path.join(best_model_path, "merged_model")
+                    os.makedirs(merged_best_path, exist_ok=True)
+                    model.save_pretrained_merged(
+                        merged_best_path,
+                        self.tokenizer,
+                        save_method="merged_16bit",
+                    )
+                    logger.info(f"Merged best model saved to {merged_best_path}")
+                except Exception as e:
+                    logger.warning(f"Could not save merged model: {e}")
+
+                # Log best model info to wandb
+                if wandb.run is not None:
+                    wandb.log(
+                        {
+                            "best/claim_accuracy": claim_acc_percent,
+                            "best/model_step": state.global_step,
+                            "step": state.global_step,
+                        }
+                    )
+
+                # Save best model info to file
+                best_info = {
+                    "best_claim_accuracy": claim_acc_percent,
+                    "best_model_step": state.global_step,
+                    "model_path": best_model_path,
+                    "merged_model_path": os.path.join(best_model_path, "merged_model"),
+                    "timestamp": str(wandb.run.start_time if wandb.run else "unknown"),
+                }
+
+                with open(
+                    os.path.join(self.model_dir, "best_model_info.json"), "w"
+                ) as f:
+                    json.dump(best_info, f, indent=2)
+
+            else:
+                logger.info(
+                    f"Current best claim accuracy: {self.best_claim_accuracy:.2f}% (step {self.best_model_step})"
+                )
+
             wandb.log(
                 {
                     "eval/claim_accuracy": claim_acc_percent,
@@ -577,6 +650,7 @@ def main():
         test_prompts=test_prompts,
         test_responses=test_responses,
         generate_every_n_steps=args.save_steps,  # Generate at same intervals as saving
+        model_dir=args.model_dir,  # Pass model directory for saving best model
     )
 
     # Set up training configuration
@@ -638,6 +712,35 @@ def main():
     # model.save_pretrained_gguf(f"{args.model_dir}/gguf", tokenizer)
 
     logger.info("Training complete!")
+
+    # Log best model information
+    if (
+        hasattr(generation_callback, "best_claim_accuracy")
+        and generation_callback.best_claim_accuracy > 0
+    ):
+        logger.info("=" * 80)
+        logger.info("BEST MODEL SUMMARY")
+        logger.info("=" * 80)
+        logger.info(
+            f"Best Claim Accuracy: {generation_callback.best_claim_accuracy:.2f}%"
+        )
+        logger.info(f"Best Model Step: {generation_callback.best_model_step}")
+        logger.info(f"Best Model Location: {args.model_dir}/best_model")
+        logger.info(
+            f"Best Merged Model Location: {args.model_dir}/best_model/merged_model"
+        )
+        logger.info("=" * 80)
+
+        # Final log to wandb
+        if args.use_wandb and wandb.run is not None:
+            wandb.log(
+                {
+                    "final/best_claim_accuracy": generation_callback.best_claim_accuracy,
+                    "final/best_model_step": generation_callback.best_model_step,
+                }
+            )
+    else:
+        logger.info("No best model was saved during training.")
 
     # Finish wandb run
     if args.use_wandb:
