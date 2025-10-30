@@ -10,6 +10,7 @@ import argparse
 from tqdm import tqdm
 import logging
 import subprocess
+import wandb
 
 # Install Unsloth if not available
 try:
@@ -135,7 +136,16 @@ class GenerationCallback(TrainerCallback):
                 try:
                     output = json.loads(generation_section)
                     # print(json.dumps(output, ensure_ascii=False, indent=2))
-
+                    wandb.log(
+                        {
+                            f"inference/sample_{i}_ground_truth": wandb.Table(
+                                data=[json.dumps(ground_truth, ensure_ascii=False)]
+                            ),
+                            f"inference/sample_{i}_generation": wandb.Table(
+                                data=[json.dumps(output, ensure_ascii=False)]
+                            ),
+                        }
+                    )
                     pred_claim = output["is_claim"]
                     pred_category = output["categories"]
 
@@ -182,8 +192,6 @@ class GenerationCallback(TrainerCallback):
             )
             # Log to wandb if available
             try:
-                import wandb
-
                 if wandb.run is not None:
                     wandb.log(
                         {
