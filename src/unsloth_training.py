@@ -150,11 +150,11 @@ class GenerationCallback(TrainerCallback):
                     if wandb.run:
                         wandb.log(
                             {
-                                f"inference/sample_{i}_ground_truth": wandb.Table(
-                                    data=[json.dumps(ground_truth, ensure_ascii=False)]
+                                f"inference/sample_{i}_ground_truth": json.dumps(
+                                    ground_truth, ensure_ascii=False
                                 ),
-                                f"inference/sample_{i}_generation": wandb.Table(
-                                    data=[json.dumps(output, ensure_ascii=False)]
+                                f"inference/sample_{i}_generation": json.dumps(
+                                    output, ensure_ascii=False
                                 ),
                             },
                             step=state.global_step,
