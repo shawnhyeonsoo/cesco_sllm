@@ -176,15 +176,13 @@ class GenerationCallback(TrainerCallback):
                     # only calculate with gt_claim_status == claim
                     if gt_claim == "claim":
                         total_gt_claims += 1
-                        if set(pred_major_categories).issubset(
-                            set(gt_major_categories)
+                        if set(gt_major_categories).issubset(
+                            set(pred_major_categories)
                         ):
                             major_category_accuracy += 1
-                        if set(pred_mid_categories).issubset(set(gt_mid_categories)):
+                        if set(gt_mid_categories).issubset(set(pred_mid_categories)):
                             mid_category_accuracy += 1
-                        if set(pred_minor_categories).issubset(
-                            set(gt_minor_categories)
-                        ):
+                        if set(gt_minor_categories).issubset(set(pred_minor_categories)):
                             minor_category_accuracy += 1
                     if set(gt_category).issubset(set(pred_category)):
                         category_accuracy += 1
