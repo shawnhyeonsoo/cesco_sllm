@@ -72,17 +72,34 @@ class EmbeddingRetrievalTester:
         # Load model and tokenizer
         print(f"\nLoading embedding model: {model_name}...")
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            self.model = AutoModel.from_pretrained(
-                model_name,
-                torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-                low_cpu_mem_usage=True
-            ).to(device)
-            self.model.eval()
-            print("Model loaded successfully!")
+            # Try using sentence-transformers library first (better memory management)
+            try:
+                from sentence_transformers import SentenceTransformer
+                self.use_sentence_transformers = True
+                self.model = SentenceTransformer(model_name, device=device)
+                self.tokenizer = None  # Not needed with sentence-transformers
+                print("Model loaded successfully using sentence-transformers!")
+            except ImportError:
+                print("sentence-transformers not found, using transformers library...")
+                self.use_sentence_transformers = False
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    model_name,
+                    model_max_length=512
+                )
+                self.model = AutoModel.from_pretrained(
+                    model_name,
+                    torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+                    low_cpu_mem_usage=True
+                ).to(device)
+                self.model.eval()
+                print("Model loaded successfully using transformers!")
         except Exception as e:
-            print(f"Error loading model: {e}")
-            print("Try using --device cpu or a smaller model")
+            print(f"\n❌ Error loading model: {e}")
+            print("\n💡 Solutions:")
+            print("   1. Use CPU: --device cpu")
+            print("   2. Use smaller model: --model_name sentence-transformers/distiluse-base-multilingual-cased-v2")
+            print("   3. Install sentence-transformers: pip install sentence-transformers")
+            print("   4. Increase system memory or close other applications")
             raise
         
         # Precompute category embeddings
@@ -118,7 +135,24 @@ class EmbeddingRetrievalTester:
         """
         if batch_size is None:
             batch_size = self.batch_size
-            
+        
+        # Use sentence-transformers library if available (better memory management)
+        if self.use_sentence_transformers:
+            try:
+                embeddings = self.model.encode(
+                    texts,
+                    batch_size=batch_size,
+                    show_progress_bar=False,
+                    normalize_embeddings=True,
+                    convert_to_numpy=True
+                )
+                return embeddings
+            except Exception as e:
+                print(f"\n❌ Error during encoding: {e}")
+                print("💡 Try reducing --batch_size or --max_samples")
+                raise
+        
+        # Fallback to manual encoding with transformers
         embeddings = []
         
         for i in range(0, len(texts), batch_size):
@@ -148,7 +182,8 @@ class EmbeddingRetrievalTester:
                     
             except RuntimeError as e:
                 if "out of memory" in str(e):
-                    print(f"\nWARNING: OOM error at batch {i}. Try reducing --batch_size")
+                    print(f"\n❌ OOM error at batch {i}/{len(texts)}")
+                    print("💡 Reduce --batch_size or use --device cpu")
                     if self.device == "cuda":
                         torch.cuda.empty_cache()
                 raise
