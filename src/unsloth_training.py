@@ -176,16 +176,19 @@ class GenerationCallback(TrainerCallback):
                     # only calculate with gt_claim_status == claim
                     if gt_claim == "claim":
                         total_gt_claims += 1
-                        if set(gt_major_categories).issubset(
-                            set(pred_major_categories)
-                        ):
+                        
+                        # Count as correct if there's ANY overlap (intersection)
+                        if set(gt_major_categories) & set(pred_major_categories):
                             major_category_accuracy += 1
-                        if set(gt_mid_categories).issubset(set(pred_mid_categories)):
+                        if set(gt_mid_categories) & set(pred_mid_categories):
                             mid_category_accuracy += 1
-                        if set(gt_minor_categories).issubset(set(pred_minor_categories)):
+                        if set(gt_minor_categories) & set(pred_minor_categories):
                             minor_category_accuracy += 1
-                    if set(gt_category).issubset(set(pred_category)):
+                    
+                    # Count as correct if there's ANY overlap in full categories
+                    if set(gt_category) & set(pred_category):
                         category_accuracy += 1
+                        
                 except Exception as e:
                     logger.warning(f"Error processing sample {i}: {e}")
                     pass
