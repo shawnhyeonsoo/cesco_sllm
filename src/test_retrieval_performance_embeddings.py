@@ -29,7 +29,8 @@ class EmbeddingRetrievalTester:
         categories_path: str,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         max_samples: int = None,
-        top_k: int = 5
+        top_k: int = 5,
+        batch_size: int = 16
     ):
         """
         Initialize the embedding retrieval tester.
@@ -41,14 +42,17 @@ class EmbeddingRetrievalTester:
             device: Device to use for inference
             max_samples: Maximum number of samples to test (None = all)
             top_k: Number of top categories to retrieve
+            batch_size: Batch size for encoding (reduce if OOM)
         """
         print(f"Initializing EmbeddingRetrievalTester with {model_name}")
         print(f"Device: {device}")
+        print(f"Batch size: {batch_size}")
         
         self.model_name = model_name
         self.device = device
         self.max_samples = max_samples
         self.top_k = top_k
+        self.batch_size = batch_size
         
         # Load test data
         print(f"\nLoading test data from {test_data_path}...")
@@ -67,10 +71,19 @@ class EmbeddingRetrievalTester:
         
         # Load model and tokenizer
         print(f"\nLoading embedding model: {model_name}...")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name).to(device)
-        self.model.eval()
-        print("Model loaded successfully!")
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.model = AutoModel.from_pretrained(
+                model_name,
+                torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+                low_cpu_mem_usage=True
+            ).to(device)
+            self.model.eval()
+            print("Model loaded successfully!")
+        except Exception as e:
+            print(f"Error loading model: {e}")
+            print("Try using --device cpu or a smaller model")
+            raise
         
         # Precompute category embeddings
         print("\nPrecomputing category embeddings...")
@@ -92,38 +105,53 @@ class EmbeddingRetrievalTester:
         input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
         return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
     
-    def encode(self, texts: List[str], batch_size: int = 32) -> np.ndarray:
+    def encode(self, texts: List[str], batch_size: int = None) -> np.ndarray:
         """
         Encode texts into embeddings.
         
         Args:
             texts: List of texts to encode
-            batch_size: Batch size for encoding
+            batch_size: Batch size for encoding (uses instance default if None)
             
         Returns:
             numpy array of embeddings
         """
+        if batch_size is None:
+            batch_size = self.batch_size
+            
         embeddings = []
         
         for i in range(0, len(texts), batch_size):
             batch_texts = texts[i:i+batch_size]
             
-            # Tokenize
-            encoded_input = self.tokenizer(
-                batch_texts,
-                padding=True,
-                truncation=True,
-                max_length=512,
-                return_tensors='pt'
-            ).to(self.device)
-            
-            # Compute embeddings
-            with torch.no_grad():
-                model_output = self.model(**encoded_input)
-                batch_embeddings = self._mean_pooling(model_output, encoded_input['attention_mask'])
-                # Normalize embeddings
-                batch_embeddings = torch.nn.functional.normalize(batch_embeddings, p=2, dim=1)
-                embeddings.append(batch_embeddings.cpu().numpy())
+            try:
+                # Tokenize
+                encoded_input = self.tokenizer(
+                    batch_texts,
+                    padding=True,
+                    truncation=True,
+                    max_length=512,
+                    return_tensors='pt'
+                ).to(self.device)
+                
+                # Compute embeddings
+                with torch.no_grad():
+                    model_output = self.model(**encoded_input)
+                    batch_embeddings = self._mean_pooling(model_output, encoded_input['attention_mask'])
+                    # Normalize embeddings
+                    batch_embeddings = torch.nn.functional.normalize(batch_embeddings, p=2, dim=1)
+                    embeddings.append(batch_embeddings.cpu().numpy())
+                
+                # Clear GPU cache
+                if self.device == "cuda":
+                    torch.cuda.empty_cache()
+                    
+            except RuntimeError as e:
+                if "out of memory" in str(e):
+                    print(f"\nWARNING: OOM error at batch {i}. Try reducing --batch_size")
+                    if self.device == "cuda":
+                        torch.cuda.empty_cache()
+                raise
         
         return np.vstack(embeddings)
     
@@ -441,6 +469,12 @@ def main():
         default="cuda" if torch.cuda.is_available() else "cpu",
         help="Device to use for inference"
     )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=16,
+        help="Batch size for encoding (default: 16, reduce if OOM)"
+    )
     
     args = parser.parse_args()
     
@@ -451,7 +485,8 @@ def main():
         categories_path=args.categories,
         device=args.device,
         max_samples=args.max_samples,
-        top_k=args.top_k
+        top_k=args.top_k,
+        batch_size=args.batch_size
     )
     
     # Run evaluation
