@@ -388,7 +388,7 @@ def parse_args():
 
     # SageMaker specific
     parser.add_argument(
-        "--train_dir", type=str, default="./data/unsloth_train_dataset.json"
+        "--train_dir", type=str, default="./data/unsloth_test_dataset.json"
     )
     parser.add_argument(
         "--test_dir", type=str, default="./data/unsloth_test_dataset.json"
