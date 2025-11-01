@@ -101,42 +101,14 @@ def load_model(base_model_name: str, adapter_path: str, max_seq_length: int = 80
                 f"    └── tokenizer files..."
             )
         
-        # First, load the base model
-        logger.info("Step 1: Loading base model...")
+        # Load the checkpoint directly - Unsloth will handle both base model + adapters
+        logger.info("Loading base model with saved LoRA adapters...")
         model, tokenizer = FastLanguageModel.from_pretrained(
-            model_name=base_model_name,
+            model_name=adapter_path,  # Point to the checkpoint directory
             max_seq_length=max_seq_length,
             dtype=None,  # Auto-detect best dtype
             load_in_4bit=load_in_4bit,
         )
-        
-        # Then load the LoRA adapters from the checkpoint
-        logger.info("Step 2: Loading LoRA adapters from best checkpoint...")
-        model = FastLanguageModel.get_peft_model(
-            model,
-            r=16,  # Must match training config
-            target_modules=[
-                "q_proj",
-                "k_proj", 
-                "v_proj",
-                "o_proj",
-                "gate_proj",
-                "up_proj",
-                "down_proj",
-            ],
-            lora_alpha=16,  # Must match training config
-            lora_dropout=0,
-            bias="none",
-            use_gradient_checkpointing="unsloth",
-            random_state=3407,
-            use_rslora=False,
-            loftq_config=None,
-        )
-        
-        # Load the saved adapter weights
-        from peft import PeftModel
-        logger.info("Step 3: Loading adapter weights from checkpoint...")
-        model = PeftModel.from_pretrained(model, adapter_path)
         
         # Set model to inference mode
         FastLanguageModel.for_inference(model)
