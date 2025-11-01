@@ -45,7 +45,7 @@ def parse_args():
     parser.add_argument(
         "--output_file",
         type=str,
-        default="./inference_results_on_train.json",
+        default="./data/inference_results_on_train.json",
         help="Path to save inference results"
     )
     parser.add_argument(
