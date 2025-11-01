@@ -1,12 +1,23 @@
 #!/bin/bash
 set -e  # Exit on error
 
+echo "============================================"
+echo "Checking system and clearing memory..."
+echo "============================================"
+
+# Clear HuggingFace cache locks
+rm -rf ~/.cache/huggingface/hub/.locks 2>/dev/null || true
+rm -rf ~/.cache/huggingface/hub/*lock* 2>/dev/null || true
+
 # Kill any zombie Python processes
 echo "Cleaning up any previous Python processes..."
 pkill -9 -f "inference_best_model.py" 2>/dev/null || true
 pkill -9 -f "unsloth_training.py" 2>/dev/null || true
 pkill -9 -f "uv run python" 2>/dev/null || true
-sleep 2
+sleep 3
+
+# Force Python garbage collection
+export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 
 # Double check they're gone
 echo "Verifying cleanup..."
