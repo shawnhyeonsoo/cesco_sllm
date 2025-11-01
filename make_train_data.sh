@@ -28,10 +28,7 @@ if ps aux | grep -E "inference|unsloth" | grep -v grep > /dev/null; then
 fi
 
 echo "Step 1: Running inference..."
-uv run python inference_best_model.py \
-    --max_samples 10 \
-    --batch_size 1 \
-    --load_in_4bit True
+uv run python inference_best_model.py --max_samples 10
 echo "Inference completed. Waiting for cleanup..."
 sleep 2
 
@@ -47,7 +44,4 @@ sync
 sleep 3
 
 echo "Step 4: Starting training..."
-uv run python src/unsloth_training.py \
-    --train_data_file data/modified_unsloth_train.json \
-    --per_device_train_batch_size 1 \
-    --gradient_accumulation_steps 4
+uv run python src/unsloth_training.py --train_data_file data/modified_unsloth_train.json
