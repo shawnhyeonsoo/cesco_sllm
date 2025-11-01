@@ -2,7 +2,7 @@ import json
 
 
 def main():
-    with open("data/inference_results_on_train.json", "r") as f:
+    with open("data/inference_results.json", "r") as f:
         inferred_train_data = json.load(f)
     inferred_train_data = inferred_train_data['results']
     with open("data/unsloth_train_dataset.json", "r") as f:
@@ -16,7 +16,7 @@ def main():
         prediction = inferred['prediction']
 
         generated = json.loads(original['output'])
-        if len(prediction['categories']) == 0:
+        if len(prediction.get('categories', [])) == 0:
             prediction['categories'] = generated['categories']
         try:
             sample = {
