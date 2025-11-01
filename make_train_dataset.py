@@ -16,7 +16,6 @@ def main():
         prediction = inferred['prediction']
         generated = json.loads(original['output'])
         try:
-            print("\n" + "="*50 + "\n")
             sample = {
                 "instruction": original["instruction"],
                 "input": original["input"],
@@ -50,6 +49,7 @@ def main():
     with open("data/modified_unsloth_train.json", "w", encoding="utf-8") as f:
         json.dump(outputs, f, ensure_ascii=False, indent=2)
     print(count)
-    
+    print(outputs[:5])
+
 if __name__ == "__main__":
     main()
