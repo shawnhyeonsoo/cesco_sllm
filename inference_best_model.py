@@ -173,17 +173,17 @@ def run_inference(model, tokenizer, dataset, output_file: str):
             inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
             outputs = model.generate(
                 **inputs,
-                max_new_tokens=512,
+                max_new_tokens=8096,
                 use_cache=True,
                 temperature=0.7,
                 do_sample=False,  # Use greedy decoding for deterministic results
                 pad_token_id=tokenizer.pad_token_id,
                 eos_token_id=tokenizer.eos_token_id,
             )
-            
+            print(outputs)
             # Decode output
             generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-            
+            print(f"Generated text for sample {idx}:\n{generated_text}\n")
             # Extract response (after "### Response:")
             if "### Response:" in generated_text:
                 response = generated_text.split("### Response:")[-1].strip()
