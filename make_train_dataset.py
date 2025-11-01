@@ -14,6 +14,8 @@ def main():
     outputs = []
     for original, inferred in zip(original_train_data, inferred_train_data):
         prediction = inferred['prediction']
+        if len(prediction['categories']) == 0:
+            prediction['categories'] = generated['categories']
         generated = json.loads(original['output'])
         try:
             sample = {

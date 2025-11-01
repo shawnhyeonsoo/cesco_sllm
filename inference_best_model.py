@@ -207,16 +207,17 @@ def run_inference(model, tokenizer, dataset, output_file: str):
                 pad_token_id=tokenizer.pad_token_id,
                 eos_token_id=tokenizer.eos_token_id,
             )
-            print(outputs)
+            
             # Decode output
             generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-            print(f"Generated text for sample {idx}:\n{generated_text}\n")
+            
             # Extract response (after "### Response:")
             if "### Response:" in generated_text:
                 response = generated_text.split("### Response:")[-1].strip()
             else:
                 response = generated_text[len(prompt):].strip()
             
+            print(json.dumps(response, ensure_ascii=False, indent=2))
             # Try to parse JSON response
             try:
                 prediction = json.loads(response)
