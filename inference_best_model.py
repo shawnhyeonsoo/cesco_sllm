@@ -203,7 +203,7 @@ def run_inference(model, tokenizer, dataset, output_file: str):
                 max_new_tokens=512,
                 use_cache=True,
                 temperature=0.7,
-                do_sample=False,  # Use greedy decoding for deterministic results
+                do_sample=True,  # Use greedy decoding for deterministic results
                 pad_token_id=tokenizer.pad_token_id,
                 eos_token_id=tokenizer.eos_token_id,
             )
