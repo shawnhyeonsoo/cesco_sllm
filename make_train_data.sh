@@ -5,7 +5,16 @@ set -e  # Exit on error
 echo "Cleaning up any previous Python processes..."
 pkill -9 -f "inference_best_model.py" 2>/dev/null || true
 pkill -9 -f "unsloth_training.py" 2>/dev/null || true
-sleep 1
+pkill -9 -f "uv run python" 2>/dev/null || true
+sleep 2
+
+# Double check they're gone
+echo "Verifying cleanup..."
+if ps aux | grep -E "inference|unsloth" | grep -v grep > /dev/null; then
+    echo "Warning: Some processes still running. Forcing cleanup..."
+    killall -9 python3 2>/dev/null || true
+    sleep 2
+fi
 
 echo "Step 1: Running inference..."
 uv run python inference_best_model.py --max_samples 10
