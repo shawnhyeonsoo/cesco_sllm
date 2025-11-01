@@ -18,6 +18,10 @@ def main():
         generated = json.loads(original['output'])
         if len(prediction.get('categories', [])) == 0:
             prediction['categories'] = generated['categories']
+        ## remove categories without "__" in the categories
+        prediction['categories'] = [cat for cat in prediction['categories'] if "__" in cat]
+        if not prediction['categories']:
+            prediction['categories'] = generated['categories']
         try:
             sample = {
                 "instruction": original["instruction"],
