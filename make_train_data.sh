@@ -44,4 +44,4 @@ sync
 sleep 3
 
 echo "Step 4: Starting training..."
-uv run python src/unsloth_training.py --train_data_file data/modified_unsloth_train.json
+uv run python src/unsloth_training.py --train_dir data/modified_unsloth_train.json --max_steps 10
