@@ -7,8 +7,12 @@ pyarrow>=21.0.0
 python-dotenv>=1.0.0
 
 # ML/DL frameworks
-torch>=2.8.0
+torch==2.8.0
+triton==3.4.0
+nvidia-nccl-cu12
 transformers>=4.56.1
+unsloth==2025.10.12
+unsloth-zoo==2025.10.13
 peft>=0.17.1
 accelerate>=0.25.0
 bitsandbytes>=0.41.0
