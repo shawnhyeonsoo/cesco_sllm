@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument(
         "--base_model_name",
         type=str,
-        default="Qwen/Qwen2.5-3B-Instruct",
+        default="Qwen/Qwen3-8B",
         help="Base model name (must match the model used in training)"
     )
     parser.add_argument(
