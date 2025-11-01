@@ -39,13 +39,13 @@ def parse_args():
     parser.add_argument(
         "--test_data",
         type=str,
-        default="./data/unsloth_test_dataset.json",
+        default="./data/unsloth_train_dataset.json",
         help="Path to test dataset JSON file"
     )
     parser.add_argument(
         "--output_file",
         type=str,
-        default="./inference_results.json",
+        default="./inference_results_on_train.json",
         help="Path to save inference results"
     )
     parser.add_argument(
