@@ -19,6 +19,72 @@ def load_json_data(file_path: str) -> list:
     return data
 
 
+def convert_to_instruction_major(data: list) -> list:
+    possible_category_df = pd.read_csv(
+        PROJECT_ROOT / "assets" / "voc_category_final.csv"
+    )
+    possible_category_list = [
+        f"{row['대분류']}" for _, row in possible_category_df.iterrows()
+    ]
+
+    possible_category_list = list(set(possible_category_list))
+
+    print(len(possible_category_list))
+    possible_bug_df = pd.read_csv(PROJECT_ROOT / "assets" / "bugs_df.csv")
+    possible_bug_types = [row["BugsNm"] for _, row in possible_bug_df.iterrows()]
+    """
+    Convert CESCO data to instruction-input-output format.
+    
+    Each example should have:
+    - instruction: Task description
+    - input: Customer complaint/input text
+    - output: JSON response with analysis
+    """
+    instruction = """다음 고객의 민원 내용을 분석하여 JSON 형식으로 응답해주세요. 다음 정보를 포함해야 합니다:
+1. is_claim: 클레임 여부 (claim 또는 non-claim)
+2. summary: 민원 내용 요약
+3. bug_type: 해충 종류 (해충 관련인 경우만, 없으면 null) (Choose one from {possible_bug_types})
+4. keywords: 주요 키워드 리스트
+5. categories: 분류 카테고리 리스트 (Choose maximum 5 from [{possible_categories}])
+6. evidences: 근거가 되는 문장 리스트""".format(
+        possible_bug_types=", ".join(possible_bug_types),
+        possible_categories=", ".join(possible_category_list),
+    )
+
+    formatted_data = []
+
+    for item in data:
+        # Create output JSON
+        output_dict = {
+            "is_claim": item.get("claim_status", ""),
+            "summary": item.get("summary", ""),
+            "bug_type": item.get("bug_type"),
+            "keywords": item.get("keywords", []),
+            "categories": list(set([cat.split("__")[0] for cat in item.get("categories", [])])),
+            "evidences": item.get("evidences", []),
+        }
+
+        if "기타__기타__기타" in output_dict["categories"]:
+            output_dict["categories"].remove("기타__기타__기타")
+            ## remove category with '기타' in any part
+            output_dict["categories"] = [
+                cat.split("__")[0]
+                for cat in output_dict["categories"]
+                if "기타" not in cat
+            ]
+            if not output_dict["categories"]:
+                continue  # Skip if no valid categories left
+        formatted_item = {
+            "instruction": instruction,
+            "input": item.get("input", ""),
+            "output": json.dumps(output_dict, ensure_ascii=False, indent=2),
+        }
+
+        formatted_data.append(formatted_item)
+
+    return formatted_data
+
+
 def convert_to_instruction_format(data: list) -> list:
     possible_category_df = pd.read_csv(
         PROJECT_ROOT / "assets" / "voc_category_final.csv"
