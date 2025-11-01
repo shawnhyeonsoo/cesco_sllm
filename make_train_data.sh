@@ -27,6 +27,19 @@ if ps aux | grep -E "inference|unsloth" | grep -v grep > /dev/null; then
     sleep 2
 fi
 
+
+echo "step 0: Train and validate on train_test_split"
+uv run python make_train_test_split_for_test.py
+sleep 2
+
+echo "============================================"
+
+echo "step 1: Running inference on train_test_split"
+uv run python src/unsloth_training.py --train_dir data/unsloth_test_dataset_train_split.json --test_dir data/unsloth_test_dataset_test_split.json
+echo "Training on train_test_split completed. Waiting for cleanup..."
+sleep 2
+
+
 echo "Step 1: Running inference..."
 uv run python inference_best_model.py
 echo "Inference completed. Waiting for cleanup..."
