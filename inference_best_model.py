@@ -25,10 +25,16 @@ def parse_args():
         description="Run inference with best saved model"
     )
     parser.add_argument(
+        "--base_model_name",
+        type=str,
+        default="Qwen/Qwen2.5-3B-Instruct",
+        help="Base model name (must match the model used in training)"
+    )
+    parser.add_argument(
         "--model_dir",
         type=str,
-        default="./outputs/best_model/merged_model",
-        help="Path to the best merged model directory"
+        default="./outputs/best_model",
+        help="Path to the best model checkpoint directory (with LoRA adapters)"
     )
     parser.add_argument(
         "--test_data",
@@ -54,39 +60,88 @@ def parse_args():
         default=1,
         help="Batch size for inference"
     )
+    parser.add_argument(
+        "--max_seq_length",
+        type=int,
+        default=8096,
+        help="Maximum sequence length"
+    )
+    parser.add_argument(
+        "--load_in_4bit",
+        type=bool,
+        default=True,
+        help="Load model in 4-bit quantization"
+    )
     return parser.parse_args()
 
 
-def load_model(model_path: str):
-    """Load the best saved model using Unsloth."""
+def load_model(base_model_name: str, adapter_path: str, max_seq_length: int = 8096, load_in_4bit: bool = True):
+    """Load the best saved model using Unsloth.
+    
+    Args:
+        base_model_name: Name of the base model (e.g., "Qwen/Qwen2.5-3B-Instruct")
+        adapter_path: Path to the LoRA adapter checkpoint
+        max_seq_length: Maximum sequence length
+        load_in_4bit: Whether to load in 4-bit quantization
+    """
     try:
         from unsloth import FastLanguageModel
         
-        logger.info(f"Loading model from {model_path}")
+        logger.info(f"Loading base model: {base_model_name}")
+        logger.info(f"Loading LoRA adapters from: {adapter_path}")
         
-        # Check if model exists
-        if not os.path.exists(model_path):
+        # Check if adapter path exists
+        if not os.path.exists(adapter_path):
             raise FileNotFoundError(
-                f"Model not found at {model_path}\n"
+                f"Adapter not found at {adapter_path}\n"
                 f"Expected structure:\n"
-                f"  {model_path}/\n"
-                f"    ├── config.json\n"
-                f"    ├── model-*.safetensors\n"
+                f"  {adapter_path}/\n"
+                f"    ├── adapter_config.json\n"
+                f"    ├── adapter_model.safetensors\n"
                 f"    └── tokenizer files..."
             )
         
-        # Load the merged model (no need for LoRA adapters)
+        # First, load the base model
+        logger.info("Step 1: Loading base model...")
         model, tokenizer = FastLanguageModel.from_pretrained(
-            model_name=model_path,
-            max_seq_length=8096,
-            dtype=None,
-            load_in_4bit=True,  # Use 4-bit for faster inference
+            model_name=base_model_name,
+            max_seq_length=max_seq_length,
+            dtype=None,  # Auto-detect best dtype
+            load_in_4bit=load_in_4bit,
         )
+        
+        # Then load the LoRA adapters from the checkpoint
+        logger.info("Step 2: Loading LoRA adapters from best checkpoint...")
+        model = FastLanguageModel.get_peft_model(
+            model,
+            r=16,  # Must match training config
+            target_modules=[
+                "q_proj",
+                "k_proj", 
+                "v_proj",
+                "o_proj",
+                "gate_proj",
+                "up_proj",
+                "down_proj",
+            ],
+            lora_alpha=16,  # Must match training config
+            lora_dropout=0,
+            bias="none",
+            use_gradient_checkpointing="unsloth",
+            random_state=3407,
+            use_rslora=False,
+            loftq_config=None,
+        )
+        
+        # Load the saved adapter weights
+        from peft import PeftModel
+        logger.info("Step 3: Loading adapter weights from checkpoint...")
+        model = PeftModel.from_pretrained(model, adapter_path)
         
         # Set model to inference mode
         FastLanguageModel.for_inference(model)
         
-        logger.info("Model loaded successfully!")
+        logger.info("✅ Model loaded successfully with LoRA adapters!")
         logger.info(f"Model device: {model.device}")
         
         return model, tokenizer
@@ -173,7 +228,7 @@ def run_inference(model, tokenizer, dataset, output_file: str):
             inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
             outputs = model.generate(
                 **inputs,
-                max_new_tokens=8096,
+                max_new_tokens=512,
                 use_cache=True,
                 temperature=0.7,
                 do_sample=False,  # Use greedy decoding for deterministic results
@@ -298,14 +353,37 @@ def main():
     logger.info("=" * 80)
     logger.info("BEST MODEL INFERENCE")
     logger.info("=" * 80)
-    logger.info(f"Model path: {args.model_dir}")
+    logger.info(f"Base model: {args.base_model_name}")
+    logger.info(f"Adapter path: {args.model_dir}")
     logger.info(f"Test data: {args.test_data}")
     logger.info(f"Output file: {args.output_file}")
     logger.info(f"Max samples: {args.max_samples or 'All'}")
+    logger.info(f"Max seq length: {args.max_seq_length}")
+    logger.info(f"Load in 4-bit: {args.load_in_4bit}")
+    
+    # Load and display best model info if available
+    best_model_info_path = os.path.join(os.path.dirname(args.model_dir), "best_model_info.json")
+    if os.path.exists(best_model_info_path):
+        try:
+            with open(best_model_info_path, "r") as f:
+                best_info = json.load(f)
+            logger.info("-" * 80)
+            logger.info("BEST MODEL CHECKPOINT INFO:")
+            logger.info(f"  Claim Accuracy: {best_info.get('best_claim_accuracy', 'N/A'):.2f}%")
+            logger.info(f"  Training Step: {best_info.get('best_model_step', 'N/A')}")
+            logger.info(f"  Timestamp: {best_info.get('timestamp', 'N/A')}")
+        except Exception as e:
+            logger.warning(f"Could not load best model info: {e}")
+    
     logger.info("=" * 80)
     
     # Load model
-    model, tokenizer = load_model(args.model_dir)
+    model, tokenizer = load_model(
+        base_model_name=args.base_model_name,
+        adapter_path=args.model_dir,
+        max_seq_length=args.max_seq_length,
+        load_in_4bit=args.load_in_4bit
+    )
     
     # Load test data
     dataset = load_test_data(args.test_data, args.max_samples)
